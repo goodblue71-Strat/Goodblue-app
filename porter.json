@@ -1,0 +1,14 @@
+{
+  "Success_factors" {
+    "Threat_of_new_entrants": [
+      {"Barriers to entry": "Capital"},
+      {"Barriers to entry": "Brand value"},
+      {"Barriers to entry": "Economies of scale"},
+      {"Barriers to entry": "Regulation"},
+    ]
+    "Industry Rivalry": [
+      {"Competition": "Fragmented"},
+      {"Competition": "Dominant Player"},
+    ]
+  }
+}
