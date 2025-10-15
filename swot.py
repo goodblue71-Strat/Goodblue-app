@@ -4,6 +4,20 @@ import os, json, uuid
 from datetime import datetime
 import streamlit as st
 
+EMBED_URL = "https://goodblue.ai/embed/navbar"  # <-- paste your deployed Next URL
+
+st.components.v1.html(
+    f"""
+    <iframe
+      src="{EMBED_URL}"
+      style="width:100%;height:88px;border:0;overflow:hidden"
+      scrolling="no"
+    ></iframe>
+    """,
+    height=88,  # increase to 96–100 if your navbar is taller
+)
+
+
 APP_NAME = "GoodBlue SWOT Analysis"
 
 # ---------- Generator Wiring ----------
