@@ -3,11 +3,11 @@ import streamlit as st
 def render_navbar(sticky: bool = True):
     """Render the GoodBlue-style navbar at the top of the Streamlit app (no CTA)."""
 
-st.markdown("""
+    st.markdown("""
     <style>
       .gb-wrap {max-width: 1120px; margin: 0 auto; padding: 0 16px;}
       .gb-nav {display:flex; justify-content:space-between; align-items:center;
-           gap:16px; padding:16px 0;}
+               gap:16px; padding:16px 0;}
       .gb-brand {font-weight:700; font-size:20px; color:#0f172a; text-decoration:none;}
       .gb-links {display:flex; gap:20px; flex-wrap:wrap; align-items:center;}
 
@@ -21,12 +21,13 @@ st.markdown("""
         text-decoration:none !important;
         font-size:14px;
       }
+
       .gb-link:hover {color:#111827;}
       .gb-hr {border:none; border-top:1px solid #e5e7eb; margin:0;}
       .gb-sticky { position: sticky; top: 0; background: #fff; z-index: 20; }
       @media (max-width: 480px) { .gb-links {gap:12px;} }
     </style>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
     sticky_cls = " gb-sticky" if sticky else ""
 
