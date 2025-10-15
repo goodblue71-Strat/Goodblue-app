@@ -44,7 +44,7 @@ def render_navbar(sticky: bool = True):
           <a href="https://goodblue.ai/#frameworks" target="_blank" rel="noopener noreferrer" class="gb-link">
             Frameworks
           </a>
-          <a href="https://goodblue.ai/pricing" target="_blank" rel="noopener noreferrer" class="gb-link">
+          <a href="https://goodblue.ai/Pricing" target="_blank" rel="noopener noreferrer" class="gb-link">
             Pricing
           </a>
         </nav>
