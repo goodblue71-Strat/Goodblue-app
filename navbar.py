@@ -8,10 +8,21 @@ def render_navbar(sticky: bool = True):
       .gb-wrap {max-width: 1120px; margin: 0 auto; padding: 0 16px;}
       .gb-nav {display:flex; justify-content:space-between; align-items:center;
                gap:16px; padding:16px 0;}
-      .gb-brand {font-weight:700; font-size:20px; color:#0f172a; text-decoration:none;}
       .gb-links {display:flex; gap:20px; flex-wrap:wrap; align-items:center;}
 
-      /* Updated: remove underline from all states */
+      /* Brand styling — remove underline in all states */
+      .gb-brand,
+      .gb-brand:link,
+      .gb-brand:visited,
+      .gb-brand:hover,
+      .gb-brand:active {
+        font-weight:700;
+        font-size:20px;
+        color:#0f172a;
+        text-decoration:none !important;
+      }
+
+      /* Updated: remove underline from all link states */
       .gb-link,
       .gb-link:link,
       .gb-link:visited,
