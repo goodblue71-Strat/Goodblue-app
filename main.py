@@ -1,4 +1,4 @@
-# main.py — GoodBlue Strategy App (center content between navbar & footer)
+# main.py — GoodBlue Strategy App (responsive layout)
 import streamlit as st
 import importlib
 from navbar import render_navbar
@@ -6,45 +6,55 @@ from footer import render_footer
 
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="images/favicon.ico", layout="centered")
 
-# ---- TUNE THESE IF NEEDED (approx visual heights in px) ----
-HEADER_PX = 72   # your navbar’s visual height
-FOOTER_PX = 64   # your footer’s visual height
-
-# ---- LAYOUT CSS: center content between header & footer ----
-st.markdown(f"""
+# ---- RESPONSIVE LAYOUT CSS ----
+st.markdown("""
 <style>
-  /* remove extra Streamlit padding so header sits near the top */
-  .block-container {{
+  /* Remove default Streamlit padding */
+  .block-container {
     padding-top: 0rem;
     padding-bottom: 0rem;
-  }}
-
-  /* a band that fills the viewport minus header+footer */
-  #gb-viewport {{
-    min-height: calc(100vh - {HEADER_PX + FOOTER_PX}px);
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Main app wrapper - flexbox layout */
+  .stApp {
     display: flex;
-    align-items: center;        /* vertical center */
-    justify-content: center;    /* horizontal center for narrow content */
-    padding: 8px 0;             /* small breathing room */
-    box-sizing: border-box;
-    width: 100%;
-  }}
-
-  /* keep Streamlit's centered layout look */
-  #gb-viewport > .gb-content-wrap {{
-    width: 100%;
-    max-width: 1120px;          /* match GoodBlue width */
-    padding: 0 16px;
-    box-sizing: border-box;
-  }}
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  /* Content area grows to fill available space */
+  .main .block-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  /* Responsive padding adjustments */
+  @media (max-width: 768px) {
+    .block-container {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    
+    .main .block-container {
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+  }
+  
+  /* Ensure content is scrollable if needed */
+  .main {
+    overflow-y: auto;
+  }
 </style>
 """, unsafe_allow_html=True)
 
-# ---- NAVBAR (top, normal flow) ----
-render_navbar(sticky=False)
-
-# ---- VIEWPORT band that centers content ----
-st.markdown('<div id="gb-viewport"><div class="gb-content-wrap">', unsafe_allow_html=True)
+# ---- NAVBAR (sticky at top) ----
+render_navbar(sticky=True)
 
 # ---------------------------
 # PAGE ROUTING HELPERS
@@ -62,13 +72,13 @@ init_page_state()
 current = st.session_state["_page"]
 
 # ---------------------------
-# ROUTER (your existing code)
+# ROUTER
 # ---------------------------
 if current == "Home":
     FRAMEWORKS = [
         {"key": "swot",    "label": "SWOT Analysis", "desc": "Identify strengths, weaknesses, opportunities, and threats.", "emoji": "🧩"},
         {"key": "ansoff",  "label": "Ansoff + TAM",  "desc": "Plan market and product growth, estimate market size.", "emoji": "📈"},
-        {"key": "5forces", "label": "Porter’s 5 Forces", "desc": "Understand competition and industry forces.", "emoji": "🏟️"},
+        {"key": "5forces", "label": "Porter's 5 Forces", "desc": "Understand competition and industry forces.", "emoji": "🏟️"},
         {"key": "bcg",     "label": "BCG Matrix", "desc": "Balance growth and cash flow across product lines.", "emoji": "🟦"},
         {"key": "7s",      "label": "McKinsey 7-S", "desc": "Align structure, strategy, systems, and culture.", "emoji": "🧭"},
         {"key": "vchain",  "label": "Value Chain", "desc": "Map where value and cost are created in operations.", "emoji": "🔗"},
@@ -78,8 +88,11 @@ if current == "Home":
 
     st.title("Choose your strategy framework")
     st.caption("Select a framework to begin your analysis.")
+    
+    st.write("")  # Add some spacing
 
-    cols = st.columns(4)
+    # Responsive column layout: 4 on desktop, 2 on tablet, 1 on mobile
+    cols = st.columns([1, 1, 1, 1])
     for i, fw in enumerate(FRAMEWORKS):
         with cols[i % 4]:
             if st.button(f"{fw['emoji']} {fw['label']}", use_container_width=True, key=f"fw_{fw['key']}"):
@@ -89,6 +102,7 @@ if current == "Home":
                 else:
                     st.session_state["pending_fw"] = fw["label"]
                     goto("ComingSoon")
+            st.caption(fw['desc'])
 
 elif current == "SWOT":
     try:
@@ -109,8 +123,5 @@ elif current == "ComingSoon":
     if st.button("Back to Home"):
         goto("Home")
 
-# ---- close viewport wrappers ----
-st.markdown('</div></div>', unsafe_allow_html=True)
-
-# ---- FOOTER (bottom, normal flow) ----
+# ---- FOOTER (at bottom) ----
 render_footer()
