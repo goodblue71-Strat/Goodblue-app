@@ -4,6 +4,8 @@ import os, json, uuid
 from datetime import datetime
 import streamlit as st
 
+APP_NAME = "GoodBlue SWOT Analysis"
+
 # ---------- Generator Wiring ----------
 if "OPENAI_API_KEY" in st.secrets:
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
