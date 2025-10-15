@@ -5,20 +5,25 @@ from datetime import datetime
 import streamlit as st
 
 EMBED_URL = "https://goodblue.ai/embed/navbar"  # <-- paste your deployed Next URL
-
-st.components.v1.html(
-    f"""
-    <iframe
-      src="{EMBED_URL}"
-      style="width:100%;height:88px;border:0;overflow:hidden"
-      scrolling="no"
-    ></iframe>
-    """,
-    height=88,  # increase to 96–100 if your navbar is taller
-)
-
-
 APP_NAME = "GoodBlue SWOT Analysis"
+
+def run():
+    # 1) MUST be first Streamlit call
+    st.set_page_config(page_title=APP_NAME, page_icon="🧩", layout="wide")
+
+    # 2) Navbar iframe (NOW inside run)
+    st.components.v1.html(
+        f"""
+        <iframe
+          src="{EMBED_URL}"
+          style="width:100%;height:88px;border:0;overflow:hidden"
+          scrolling="no"
+        ></iframe>
+        """,
+        height=88,
+    )
+
+
 
 # ---------- Generator Wiring ----------
 if "OPENAI_API_KEY" in st.secrets:
