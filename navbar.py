@@ -68,6 +68,5 @@ def render_navbar(sticky: bool = True):
           </a>
         </nav>
       </div>
-      <hr class="gb-hr"/>
     </div>
     """, unsafe_allow_html=True)
