@@ -4,6 +4,12 @@ import importlib
 
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="🧠", layout="centered")
 
+EMBED_URL = "https://goodblue.ai/embed/navbar"
+st.components.v1.html(
+    f'<iframe src="{EMBED_URL}" style="width:100%;height:96px;border:0;overflow:hidden;background:transparent" scrolling="no"></iframe>',
+    height=96,
+)
+
 # ---------------------------
 # Page routing helpers
 # ---------------------------
@@ -21,17 +27,6 @@ def init_page_state():
         st.session_state["_page"] = qp.get("page", "Home")
 
 init_page_state()
-
-# ---------------------------
-# Simple top navbar
-# ---------------------------
-cols = st.columns([1, 1, 6])
-with cols[0]:
-    if st.button("🏠 Home", use_container_width=True):
-        goto("Home")
-with cols[1]:
-    if st.button("🧩 SWOT", use_container_width=True):
-        goto("SWOT")
 
 st.divider()
 
