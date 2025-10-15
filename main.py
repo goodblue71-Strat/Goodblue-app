@@ -1,4 +1,4 @@
-# main.py — GoodBlue Strategy App (Modular layout with Navbar + Footer)
+# main.py — GoodBlue Strategy App (Navbar pinned top, footer pinned bottom)
 import streamlit as st
 import importlib
 from navbar import render_navbar
@@ -7,32 +7,47 @@ from footer import render_footer
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="images/favicon.ico", layout="centered")
 
-# --- PAGE LAYOUT CSS: top navbar, bottom footer, flexible middle ---
+# --- LAYOUT CSS: full-height flex column, no extra padding ---
 st.markdown("""
 <style>
-/* Make the main app area a full-height flex column */
-[data-testid="stAppViewContainer"] > .main {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+/* Make the entire app a full-height flex column */
+html, body, [data-testid="stAppViewContainer"] {
+  height: 100%;
 }
 
-/* Remove default vertical padding so navbar sits flush at the top */
+/* The .main element is Streamlit's inner page container */
+[data-testid="stAppViewContainer"] > .main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Remove default Streamlit padding so navbar sits flush at the top */
 .block-container {
   padding-top: 0rem;
   padding-bottom: 0rem;
+  width: 100%;
 }
 
-/* Our content wrapper will grow to fill space between navbar and footer */
+/* Our content area grows to fill space between navbar and footer */
 #gb-content {
   flex: 1 0 auto;
   width: 100%;
+}
+
+/* Optional: ensure there's no unexpected margin at top of first element */
+#gb-content > :first-child {
+  margin-top: 0 !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # --- NAVBAR (topmost) ---
-render_navbar(sticky=False)  # sticky not needed since layout pins it at the top
+# Your navbar.css already supports sticky when sticky=True (position: sticky; top:0)
+render_navbar(sticky=True)
+
+# --- CONTENT (fills the space between navbar and footer) ---
+st.markdown('<div id="gb-content">', unsafe_allow_html=True)
 
 # ---------------------------
 # PAGE ROUTING HELPERS
@@ -50,14 +65,10 @@ def init_page_state():
 init_page_state()
 current = st.session_state["_page"]
 
-# --- CONTENT (fills the middle space between navbar and footer) ---
-st.markdown('<div id="gb-content">', unsafe_allow_html=True)
-
 # ---------------------------
 # ROUTER
 # ---------------------------
 if current == "Home":
-    # --- Framework Selection Grid ---
     FRAMEWORKS = [
         {"key": "swot",    "label": "SWOT Analysis", "desc": "Identify strengths, weaknesses, opportunities, and threats.", "emoji": "🧩"},
         {"key": "ansoff",  "label": "Ansoff + TAM",  "desc": "Plan market and product growth, estimate market size.", "emoji": "📈"},
@@ -84,7 +95,6 @@ if current == "Home":
                     goto("ComingSoon")
 
 elif current == "SWOT":
-    # --- SWOT Page ---
     try:
         swot = importlib.import_module("swot")
         if hasattr(swot, "run"):
@@ -97,7 +107,6 @@ elif current == "SWOT":
         st.exception(e)
 
 elif current == "ComingSoon":
-    # --- Placeholder for other frameworks ---
     label = st.session_state.get("pending_fw", "This framework")
     st.title(label)
     st.warning("This framework module is not yet implemented. Coming soon!")
