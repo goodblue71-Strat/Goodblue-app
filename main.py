@@ -5,9 +5,15 @@ import importlib
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="🧠", layout="centered")
 # --- Navbar ---
 EMBED_URL = "https://goodblue.ai/embed/navbar"
-st.components.v1.html(
-    f'<iframe src="{EMBED_URL}" style="width:100%;height:96px;border:0;overflow:hidden;background:transparent" scrolling="no"></iframe>',
-    height=96,
+st.markdown(
+    f"""
+    <iframe
+      src="{EMBED_URL}"
+      style="width:100%; height:96px; border:0; overflow:hidden; background:transparent"
+      scrolling="no"
+    ></iframe>
+    """,
+    unsafe_allow_html=True,
 )
 
 # ---------------------------
