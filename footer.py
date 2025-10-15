@@ -50,7 +50,6 @@ def render_footer():
     </style>
 
     <div class="gb-wrap">
-      <hr class="gb-hr"/>
       <div class="gb-footer">
         <div class="gb-footer-left">
           © 2025 GoodBlue.ai
