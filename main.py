@@ -7,15 +7,18 @@ st.set_page_config(page_title="GoodBlue Strategy App", page_icon="🧠", layout=
 # ---------------------------
 # Page routing helpers
 # ---------------------------
+# ---------------------------
+# Page routing helpers
+# ---------------------------
 def goto(page_key: str):
     st.session_state["_page"] = page_key
-    # keep URL in sync for deep links (e.g., /?page=SWOT)
-    st.experimental_set_query_params(page=page_key)
+    # New Streamlit syntax for query params
+    st.query_params["page"] = page_key
 
 def init_page_state():
     if "_page" not in st.session_state:
-        qp = st.experimental_get_query_params()
-        st.session_state["_page"] = qp.get("page", ["Home"])[0]
+        qp = st.query_params
+        st.session_state["_page"] = qp.get("page", "Home")
 
 init_page_state()
 
