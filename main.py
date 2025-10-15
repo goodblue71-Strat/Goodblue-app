@@ -7,8 +7,32 @@ from footer import render_footer
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="images/favicon.ico", layout="centered")
 
-# --- NAVBAR (no CTA) ---
-render_navbar(sticky=True)
+# --- PAGE LAYOUT CSS: top navbar, bottom footer, flexible middle ---
+st.markdown("""
+<style>
+/* Make the main app area a full-height flex column */
+[data-testid="stAppViewContainer"] > .main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Remove default vertical padding so navbar sits flush at the top */
+.block-container {
+  padding-top: 0rem;
+  padding-bottom: 0rem;
+}
+
+/* Our content wrapper will grow to fill space between navbar and footer */
+#gb-content {
+  flex: 1 0 auto;
+  width: 100%;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --- NAVBAR (topmost) ---
+render_navbar(sticky=False)  # sticky not needed since layout pins it at the top
 
 # ---------------------------
 # PAGE ROUTING HELPERS
@@ -25,6 +49,9 @@ def init_page_state():
 
 init_page_state()
 current = st.session_state["_page"]
+
+# --- CONTENT (fills the middle space between navbar and footer) ---
+st.markdown('<div id="gb-content">', unsafe_allow_html=True)
 
 # ---------------------------
 # ROUTER
@@ -77,5 +104,7 @@ elif current == "ComingSoon":
     if st.button("Back to Home"):
         goto("Home")
 
-# --- FOOTER ---
+st.markdown('</div>', unsafe_allow_html=True)  # end #gb-content
+
+# --- FOOTER (bottommost) ---
 render_footer()
