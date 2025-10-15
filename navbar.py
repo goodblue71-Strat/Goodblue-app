@@ -9,12 +9,14 @@ def render_navbar(sticky: bool = True):
       .gb-nav {display:flex; justify-content:space-between; align-items:center;
                gap:16px; padding:16px 0;}
       .gb-links {display:flex; gap:20px; flex-wrap:wrap; align-items:center;}
+
+      /* Match Tailwind 'font-sans' system stack */
       body, .gb-brand, .gb-link {
-                  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
-                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-                 "Segoe UI Symbol", "Noto Color Emoji";
-       }
+        font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                     "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                     sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                     "Segoe UI Symbol", "Noto Color Emoji";
+      }
 
       /* Brand styling — remove underline in all states */
       .gb-brand,
@@ -41,8 +43,8 @@ def render_navbar(sticky: bool = True):
 
       .gb-link:hover {color:#111827;}
       .gb-hr {border:none; border-top:1px solid #e5e7eb; margin:0;}
-      .gb-sticky { position: sticky; top: 0; background: #fff; z-index: 20; }
-      @media (max-width: 480px) { .gb-links {gap:12px;} }
+      .gb-sticky {position: sticky; top: 0; background: #fff; z-index: 20;}
+      @media (max-width: 480px) {.gb-links {gap:12px;}}
     </style>
     """, unsafe_allow_html=True)
 
