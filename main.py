@@ -3,6 +3,20 @@ import streamlit as st
 import importlib
 
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="🧠", layout="centered")
+# ------
+st.markdown(
+    """
+    <script>
+      window.addEventListener('message', function(e) {
+        if (e && e.data && e.data.type === 'goodblue:navigate' && e.data.href) {
+          window.location.href = e.data.href;
+        }
+      });
+    </script>
+    """,
+    unsafe_allow_html=True,
+)
+
 # --- Navbar ---
 EMBED_URL = "https://goodblue.ai/embed/navbar"
 st.markdown(
