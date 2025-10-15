@@ -9,6 +9,12 @@ def render_navbar(sticky: bool = True):
       .gb-nav {display:flex; justify-content:space-between; align-items:center;
                gap:16px; padding:16px 0;}
       .gb-links {display:flex; gap:20px; flex-wrap:wrap; align-items:center;}
+      body, .gb-brand, .gb-link {
+                  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans",
+                 sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+                 "Segoe UI Symbol", "Noto Color Emoji";
+       }
 
       /* Brand styling — remove underline in all states */
       .gb-brand,
