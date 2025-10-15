@@ -3,36 +3,22 @@ import streamlit as st
 import importlib
 
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="🧠", layout="centered")
-# ------
-st.markdown(
-    """
-    <script>
-      window.addEventListener('message', function(e) {
-        if (e && e.data && e.data.type === 'goodblue:navigate' && e.data.href) {
-          window.location.href = e.data.href;
-        }
-      });
-    </script>
-    """,
-    unsafe_allow_html=True,
-)
 
-# --- Navbar ---
-EMBED_URL = "https://goodblue.ai/embed/navbar"
+# --- Navbar (embed) ---
+NAVBAR_URL = "https://goodblue.ai/embed/navbar"
 st.markdown(
     f"""
     <iframe
-      src="{EMBED_URL}"
+      src="{NAVBAR_URL}"
       style="width:100%; height:96px; border:0; overflow:hidden; background:transparent"
       scrolling="no"
+      sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+      referrerpolicy="no-referrer-when-downgrade"
     ></iframe>
     """,
     unsafe_allow_html=True,
 )
 
-# ---------------------------
-# Page routing helpers
-# ---------------------------
 # ---------------------------
 # Page routing helpers
 # ---------------------------
@@ -110,14 +96,18 @@ elif current == "ComingSoon":
     if st.button("Back to Home"):
         goto("Home")
 
-# --- Footer ---
-st.markdown("""
-<hr style='margin-top: 2em;'>
-<iframe
-  src="https://goodblue.ai/embed/footer"
-  width="100%"
-  height="120"
-  style="border:none; overflow:hidden;"
-  scrolling="no"
-></iframe>
-""", unsafe_allow_html=True)
+# --- Footer (embed) ---
+FOOTER_URL = "https://goodblue.ai/embed/footer"
+st.markdown(
+    f"""
+    <hr style='margin-top: 2em;'>
+    <iframe
+      src="{FOOTER_URL}"
+      style="width:100%; height:120px; border:0; overflow:hidden; background:transparent"
+      scrolling="no"
+      sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
+      referrerpolicy="no-referrer-when-downgrade"
+    ></iframe>
+    """,
+    unsafe_allow_html=True,
+)
