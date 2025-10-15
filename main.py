@@ -26,8 +26,6 @@ def init_page_state():
 init_page_state()
 current = st.session_state["_page"]
 
-st.divider()
-
 # ---------------------------
 # ROUTER
 # ---------------------------
