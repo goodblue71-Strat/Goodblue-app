@@ -1,30 +1,21 @@
-# main.py — GoodBlue Framework Launcher (Option 2: in-app page switcher)
+# main.py — GoodBlue Strategy App (Modular layout with Navbar + Footer)
 import streamlit as st
 import importlib
+from navbar import render_navbar
+from footer import render_footer
 
+# --- PAGE CONFIG ---
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="🧠", layout="centered")
 
-# --- Navbar (embed) ---
-NAVBAR_URL = "https://goodblue.ai/embed/navbar"
-st.markdown(
-    f"""
-    <iframe
-      src="{NAVBAR_URL}"
-      style="width:100%; height:96px; border:0; overflow:hidden; background:transparent"
-      scrolling="no"
-      sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-      referrerpolicy="no-referrer-when-downgrade"
-    ></iframe>
-    """,
-    unsafe_allow_html=True,
-)
+# --- NAVBAR (no CTA) ---
+render_navbar(sticky=True)
 
 # ---------------------------
-# Page routing helpers
+# PAGE ROUTING HELPERS
 # ---------------------------
 def goto(page_key: str):
+    """Switch between pages using Streamlit session state."""
     st.session_state["_page"] = page_key
-    # New Streamlit syntax for query params
     st.query_params["page"] = page_key
 
 def init_page_state():
@@ -33,18 +24,15 @@ def init_page_state():
         st.session_state["_page"] = qp.get("page", "Home")
 
 init_page_state()
+current = st.session_state["_page"]
 
 st.divider()
 
 # ---------------------------
 # ROUTER
 # ---------------------------
-current = st.session_state["_page"]
-
 if current == "Home":
-    # ---------------------------
-    # STEP 1: Choose Framework (your original grid)
-    # ---------------------------
+    # --- Framework Selection Grid ---
     FRAMEWORKS = [
         {"key": "swot",    "label": "SWOT Analysis", "desc": "Identify strengths, weaknesses, opportunities, and threats.", "emoji": "🧩"},
         {"key": "ansoff",  "label": "Ansoff + TAM",  "desc": "Plan market and product growth, estimate market size.", "emoji": "📈"},
@@ -64,7 +52,6 @@ if current == "Home":
         with cols[i % 4]:
             if st.button(f"{fw['emoji']} {fw['label']}", use_container_width=True, key=f"fw_{fw['key']}"):
                 st.session_state["framework"] = fw["key"]
-                # Navigate to the selected page via router
                 if fw["key"] == "swot":
                     goto("SWOT")
                 else:
@@ -72,13 +59,11 @@ if current == "Home":
                     goto("ComingSoon")
 
 elif current == "SWOT":
-    # ---------------------------
-    # Load and run SWOT page module
-    # ---------------------------
+    # --- SWOT Page ---
     try:
-        swot = importlib.import_module("swot")   # swot.py in the same folder
+        swot = importlib.import_module("swot")
         if hasattr(swot, "run"):
-            swot.run()  # if you want to pass shared state later: swot.run(st.session_state.get("app_state", {}))
+            swot.run()
         else:
             st.error("`swot.run()` not found. Please define a run() function in swot.py.")
     except ModuleNotFoundError as e:
@@ -87,27 +72,12 @@ elif current == "SWOT":
         st.exception(e)
 
 elif current == "ComingSoon":
-    # ---------------------------
-    # Placeholder for other frameworks
-    # ---------------------------
+    # --- Placeholder for other frameworks ---
     label = st.session_state.get("pending_fw", "This framework")
     st.title(label)
     st.warning("This framework module is not yet implemented. Coming soon!")
     if st.button("Back to Home"):
         goto("Home")
 
-# --- Footer (embed) ---
-FOOTER_URL = "https://goodblue.ai/embed/footer"
-st.markdown(
-    f"""
-    <hr style='margin-top: 2em;'>
-    <iframe
-      src="{FOOTER_URL}"
-      style="width:100%; height:120px; border:0; overflow:hidden; background:transparent"
-      scrolling="no"
-      sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"
-      referrerpolicy="no-referrer-when-downgrade"
-    ></iframe>
-    """,
-    unsafe_allow_html=True,
-)
+# --- FOOTER ---
+render_footer()
