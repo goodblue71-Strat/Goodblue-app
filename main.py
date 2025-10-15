@@ -5,7 +5,7 @@ from navbar import render_navbar
 from footer import render_footer
 
 # --- PAGE CONFIG ---
-st.set_page_config(page_title="GoodBlue Strategy App", page_icon="🧠", layout="centered")
+st.set_page_config(page_title="GoodBlue Strategy App", page_icon="images/favicon.ico", layout="centered")
 
 # --- NAVBAR (no CTA) ---
 render_navbar(sticky=True)
