@@ -3,7 +3,7 @@ import streamlit as st
 import importlib
 
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="🧠", layout="centered")
-
+# --- Navbar ---
 EMBED_URL = "https://goodblue.ai/embed/navbar"
 st.components.v1.html(
     f'<iframe src="{EMBED_URL}" style="width:100%;height:96px;border:0;overflow:hidden;background:transparent" scrolling="no"></iframe>',
@@ -89,3 +89,15 @@ elif current == "ComingSoon":
     st.warning("This framework module is not yet implemented. Coming soon!")
     if st.button("Back to Home"):
         goto("Home")
+
+# --- Footer ---
+st.markdown("""
+<hr style='margin-top: 2em;'>
+<iframe
+  src="https://goodblue.ai/embed/footer"
+  width="100%"
+  height="120"
+  style="border:none; overflow:hidden;"
+  scrolling="no"
+></iframe>
+""", unsafe_allow_html=True)
