@@ -1,44 +1,55 @@
-# main.py — GoodBlue Strategy App (reliable footer-to-bottom layout)
+# main.py — GoodBlue Strategy App (center content between navbar & footer)
 import streamlit as st
 import importlib
 from navbar import render_navbar
 from footer import render_footer
 
-# --- PAGE CONFIG ---
 st.set_page_config(page_title="GoodBlue Strategy App", page_icon="images/favicon.ico", layout="centered")
 
-# --- Simple CSS for a reliable min-height content wrapper ---
-# Tune these to match your actual navbar/footer visual heights
-HEADER_PX = 80   # approx height of your navbar area
-FOOTER_PX = 72   # approx height of your footer area
+# ---- TUNE THESE IF NEEDED (approx visual heights in px) ----
+HEADER_PX = 72   # your navbar’s visual height
+FOOTER_PX = 64   # your footer’s visual height
 
+# ---- LAYOUT CSS: center content between header & footer ----
 st.markdown(f"""
 <style>
-  /* Remove Streamlit's extra vertical padding so navbar sits near the top */
+  /* remove extra Streamlit padding so header sits near the top */
   .block-container {{
     padding-top: 0rem;
     padding-bottom: 0rem;
   }}
 
-  /* Content area grows to fill remaining viewport height on short pages */
-  #gb-content {{
+  /* a band that fills the viewport minus header+footer */
+  #gb-viewport {{
     min-height: calc(100vh - {HEADER_PX + FOOTER_PX}px);
-    display: block;
+    display: flex;
+    align-items: center;        /* vertical center */
+    justify-content: center;    /* horizontal center for narrow content */
+    padding: 8px 0;             /* small breathing room */
+    box-sizing: border-box;
+    width: 100%;
+  }}
+
+  /* keep Streamlit's centered layout look */
+  #gb-viewport > .gb-content-wrap {{
+    width: 100%;
+    max-width: 1120px;          /* match GoodBlue width */
+    padding: 0 16px;
+    box-sizing: border-box;
   }}
 </style>
 """, unsafe_allow_html=True)
 
-# --- NAVBAR (top, normal flow — no fixed/sticky hacks) ---
+# ---- NAVBAR (top, normal flow) ----
 render_navbar(sticky=False)
 
-# --- CONTENT WRAPPER (fills space so footer lands at bottom) ---
-st.markdown('<div id="gb-content">', unsafe_allow_html=True)
+# ---- VIEWPORT band that centers content ----
+st.markdown('<div id="gb-viewport"><div class="gb-content-wrap">', unsafe_allow_html=True)
 
 # ---------------------------
 # PAGE ROUTING HELPERS
 # ---------------------------
 def goto(page_key: str):
-    """Switch between pages using Streamlit session state."""
     st.session_state["_page"] = page_key
     st.query_params["page"] = page_key
 
@@ -51,7 +62,7 @@ init_page_state()
 current = st.session_state["_page"]
 
 # ---------------------------
-# ROUTER
+# ROUTER (your existing code)
 # ---------------------------
 if current == "Home":
     FRAMEWORKS = [
@@ -98,7 +109,8 @@ elif current == "ComingSoon":
     if st.button("Back to Home"):
         goto("Home")
 
-st.markdown('</div>', unsafe_allow_html=True)  # end #gb-content
+# ---- close viewport wrappers ----
+st.markdown('</div></div>', unsafe_allow_html=True)
 
-# --- FOOTER (bottom) ---
+# ---- FOOTER (bottom, normal flow) ----
 render_footer()
