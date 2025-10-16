@@ -14,8 +14,9 @@ Usage (in Streamlit button handler):
 
     results = gen.generate_selected_frameworks(
         company=state["company"],
-        scope=state["scope"],
+        industry=state["industry"],
         product=state["product"],
+        product_feature=state["scope"],
         frameworks=state["frameworks"],
         notes=state.get("notes"),
         geo=state.get("geo") or None,
@@ -108,18 +109,11 @@ _GEN_SYS = (
     "No prose, no markdown, no backticks. Keep each list item short (<=18 words)."
 )
 
-def _scope_prompt(company: str) -> str:
-    return f"""
-Company: {company}
-       Produce JSON with the key scope with an exact and concise 1-line description of the relevant business scope of the company.
-        """.strip()
-
-
-
 def _industry_analysis_prompt(
     company: str,
-    scope: str,
+    industry: str,
     product: str,
+    product_feature: str,
     notes: Optional[str],
     geo: Optional[str],
     success_factors: Optional[dict] = None) -> str:
@@ -130,8 +124,9 @@ def _industry_analysis_prompt(
         success_factors = {}
     return f"""
 Company: {company}
-Scope: {scope}
+Industry: {industry}
 Product: {product}
+Product Feature: {product_feature}
 Geography: {geo or "unspecified"}
 Notes: {notes or ""}
 
@@ -141,9 +136,9 @@ You are given a JSON file of success factors:
 {json.dumps(success_factors, indent=2)}
 
 Task:
-1) List the top 5 industry verticals applicable to the Company, Scope, and Product (exactly 5).
+1) List the top 5 industry verticals applicable to the Company, Industry, and Product (exactly 5).
 2) From the provided JSON, choose the 3 most important Critical_success_category for this context (exactly 3).
-3) For each chosen category, select the top 3 success factors (exactly 3 per category), each ≤5 words and contextual to the scope/product.
+3) For each chosen category, select the top 3 success factors (exactly 3 per category), each ≤5 words and contextual to the industry/product.
 
 Each industry item must include:
 - "industry_vertical_name": string
@@ -199,11 +194,12 @@ Example schema:
 }}
 """.strip()
     
-def _swot_prompt(company: str, scope: str, product: str, notes: Optional[str], geo: Optional[str]) -> str:
+def _swot_prompt(company: str, industry: str, product: str, product_feature: str, notes: Optional[str], geo: Optional[str]) -> str:
     return f"""
 Company: {company}
-scope: {scope}
+Industry: {industry}
 Product: {product}
+Product Feature: {product_feature}
 Geography: {geo or "unspecified"}
 Notes: {notes or ""}
 
@@ -223,9 +219,10 @@ _DEF_BENCH_CAPS = [
     "Support/Success"
 ]
 
-def _ansoff_prompt(company: str, product: str, notes: Optional[str], geo: Optional[str]) -> str:
+def _ansoff_prompt(company: str, industry: str, product: str, notes: Optional[str], geo: Optional[str]) -> str:
     return f"""
 Company: {company}
+Industry: {industry}
 Product: {product}
 Geography: {geo or "unspecified"}
 Notes: {notes or ""}
@@ -251,9 +248,6 @@ Keep titles crisp; impact×effort should reflect SWOT threats/opportunities and 
 """.strip()
 
 # ---------------------- Fallback (offline) heuristics ----------------------
-
-def _fallback_scope() -> Dict[str, List[str]]:
-    return ""
 
 def _fallback_ind() -> Dict[str, List[str]]:
     return {
@@ -349,23 +343,47 @@ def _fallback_benchmark(company: str, peers: List[str], caps: List[str]) -> Dict
 # ---------------------- Core Generator ----------------------
 
 @dataclass
-
 class StrategyGenerator:
     provider: Optional[LLMProvider] = None
 
     # ---- Public API ----
-    def generate_Industry_Analysis(self, company: str, scope: str, product: str, *, notes: Optional[str] = None, geo: Optional[str] = None) -> Dict[str, Any]:
+    def generate_Industry_Analysis(
+        self, 
+        company: str, 
+        industry: str, 
+        product: str, 
+        product_feature: str,
+        *, 
+        notes: Optional[str] = None, 
+        geo: Optional[str] = None
+    ) -> Dict[str, Any]:
         if self.provider:
-            out = _extract_json(self.provider.complete(_GEN_SYS, _industry_analysis_prompt(company, scope, product, notes, geo)))
-            #if isinstance(out, list):
+            out = _extract_json(
+                self.provider.complete(
+                    _GEN_SYS, 
+                    _industry_analysis_prompt(company, industry, product, product_feature, notes, geo)
+                )
+            )
             return out
         # fallback
         return _fallback_ind()
         
-    def generate_swot(self, company: str, scope: str, product: str, *, notes: Optional[str] = None, geo: Optional[str] = None) -> Dict[str, List[str]]:
+    def generate_swot(
+        self, 
+        company: str, 
+        industry: str, 
+        product: str,
+        product_feature: str,
+        *, 
+        notes: Optional[str] = None, 
+        geo: Optional[str] = None
+    ) -> Dict[str, List[str]]:
         if self.provider:
             out = _extract_json(
-                self.provider.complete(_GEN_SYS, _swot_prompt(company, scope, product, notes, geo))
+                self.provider.complete(
+                    _GEN_SYS, 
+                    _swot_prompt(company, industry, product, product_feature, notes, geo)
+                )
             )
             S = _coerce_list(out.get("S"))
             W = _coerce_list(out.get("W"))
@@ -376,10 +394,18 @@ class StrategyGenerator:
         # fallback
         return _fallback_swot()
 
-    def generate_ansoff(self, company: str, scope: str, product: str, *, notes: Optional[str] = None, geo: Optional[str] = None) -> Dict[str, List[str]]:
+    def generate_ansoff(
+        self, 
+        company: str, 
+        industry: str, 
+        product: str, 
+        *, 
+        notes: Optional[str] = None, 
+        geo: Optional[str] = None
+    ) -> Dict[str, List[str]]:
         if self.provider:
             out = _extract_json(
-                self.provider.complete(_GEN_SYS, _ansoff_prompt(company, product, notes, geo))
+                self.provider.complete(_GEN_SYS, _ansoff_prompt(company, industry, product, notes, geo))
             )
             mp = _coerce_list(out.get("market_penetration"))
             md = _coerce_list(out.get("market_development"))
@@ -394,7 +420,14 @@ class StrategyGenerator:
                 }
         return _fallback_ansoff()
 
-    def generate_benchmark(self, company: str, scope: str, product: str, *, peers: Optional[List[str]] = None, caps: Optional[List[str]] = None) -> Dict[str, Any]:
+    def generate_benchmark(
+        self, 
+        company: str, 
+        product: str, 
+        *, 
+        peers: Optional[List[str]] = None, 
+        caps: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         peers = peers or ["PeerA", "PeerB"]
         caps = caps or _DEF_BENCH_CAPS
         if self.provider:
@@ -418,7 +451,13 @@ class StrategyGenerator:
                 return {"peers": peers, "table": cleaned[: len(caps)]}
         return _fallback_benchmark(company, peers, caps)
 
-    def generate_recommendations(self, results: Dict[str, Any], *, top_k: int = 5, constraints: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def generate_recommendations(
+        self, 
+        results: Dict[str, Any], 
+        *, 
+        top_k: int = 5, 
+        constraints: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
         # Heuristic scaffold using SWOT + Ansoff if no LLM
         def _score(title: str) -> Dict[str, int]:
             # naive scoring based on keywords
@@ -441,7 +480,12 @@ class StrategyGenerator:
                         impact = int(item.get("impact", 3))
                         effort = int(item.get("effort", 2))
                         rationale = str(item.get("rationale", "")).strip()
-                        cleaned.append({"title": title, "impact": max(1, min(5, impact)), "effort": max(1, min(5, effort)), "rationale": rationale})
+                        cleaned.append({
+                            "title": title, 
+                            "impact": max(1, min(5, impact)), 
+                            "effort": max(1, min(5, effort)), 
+                            "rationale": rationale
+                        })
                     if cleaned:
                         return cleaned
             except Exception:
@@ -466,15 +510,21 @@ class StrategyGenerator:
         recs = []
         for s in seeds[: top_k]:
             sc = _score(s)
-            recs.append({"title": s, "impact": sc["impact"], "effort": sc["effort"], "rationale": "Derived from analysis."})
+            recs.append({
+                "title": s, 
+                "impact": sc["impact"], 
+                "effort": sc["effort"], 
+                "rationale": "Derived from analysis."
+            })
         return recs
 
     def generate_selected_frameworks(
         self,
         *,
         company: str,
-        scope: str,
+        industry: str,
         product: str,
+        product_feature: str,
         frameworks: List[str],
         notes: Optional[str] = None,
         geo: Optional[str] = None,
@@ -483,11 +533,15 @@ class StrategyGenerator:
         out: Dict[str, Any] = {}
         fwset = set([f.strip() for f in frameworks])
         if "Industry Analysis" in fwset:
-            out["ind"] = self.generate_Industry_Analysis(company, scope, product, notes=notes, geo=geo)
+            out["ind"] = self.generate_Industry_Analysis(
+                company, industry, product, product_feature, notes=notes, geo=geo
+            )
         if "SWOT" in fwset:
-            out["SWOT"] = self.generate_swot(company, scope, product, notes=notes, geo=geo)
+            out["SWOT"] = self.generate_swot(
+                company, industry, product, product_feature, notes=notes, geo=geo
+            )
         if "Ansoff" in fwset:
-            out["Ansoff"] = self.generate_ansoff(company, scope, product, notes=notes, geo=geo)
+            out["Ansoff"] = self.generate_ansoff(company, industry, product, notes=notes, geo=geo)
         if "Benchmark" in fwset:
             out["Benchmark"] = self.generate_benchmark(company, product, peers=peers)
         if "Fit Matrix" in fwset:
@@ -499,20 +553,14 @@ class StrategyGenerator:
             ]}
         return out
 
-    def generate_scope(self, company: str) -> str:
-        if self.provider:
-            out = _extract_json(
-                self.provider.complete(_GEN_SYS, _scope_prompt(company))
-            )
-        return out.get("scope", "")
-
 # ---------------------- Quick self-test ----------------------
 if __name__ == "__main__":
     gen = StrategyGenerator(provider=None)  # offline fallback
     res = gen.generate_selected_frameworks(
         company="ACME Robotics",
-        scope="builds and sells robots",
+        industry="Manufacturing",
         product="Industrial IoT Sensors",
+        product_feature="Identifying bearing failure",
         frameworks=["SWOT", "Ansoff", "Benchmark"],
         notes="Mid-market focus",
         geo="US",
