@@ -52,6 +52,7 @@ def run():
             "analysis_id": str(uuid.uuid4()),
             "company": "",
             "product": "",
+            "industry": "",
             "scope": "",
             "geo": "",
             "notes": "",
@@ -97,8 +98,9 @@ def run():
         st.subheader("Inputs")
         state["company"] = st.text_input("Company *", state["company"], placeholder="e.g., Emerson")
         state["product"] = st.text_input("Product *", state["product"], placeholder="e.g., Edge IoT Sensors")
-        state["scope"] = st.text_input("Scope (optional)", state["scope"], placeholder="e.g., Manufacturing")
-        state["geo"] = st.selectbox("Geography (optional)", ["", "US", "EU", "APAC"])
+        state["industry"] = st.text_input("Industry", state.get("industry", ""), placeholder="e.g., Manufacturing")
+        state["scope"] = st.text_input("Product Feature (optional)", state["scope"], placeholder="e.g., Identifying bearing failure")
+        state["geo"] = st.selectbox("Geography (optional)", ["", "US", "EU", "APAC", "Africa", "Middle East"])
         state["notes"] = st.text_area("Notes (optional)", value=state["notes"], height=100)
 
         # Disable button if generator not available
@@ -193,7 +195,8 @@ def run():
             "timestamp": datetime.now().isoformat(),
             "company": state["company"],
             "product": state["product"],
-            "scope": state["scope"],
+            "industry": state.get("industry", ""),
+            "product_feature": state["scope"],
             "geography": state["geo"],
             "notes": state["notes"],
             "swot": sw
@@ -218,6 +221,7 @@ def run():
                 "analysis_id": str(uuid.uuid4()),
                 "company": "",
                 "product": "",
+                "industry": "",
                 "scope": "",
                 "geo": "",
                 "notes": "",
