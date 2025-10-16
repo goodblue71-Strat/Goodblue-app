@@ -11,11 +11,13 @@ if "OPENAI_API_KEY" in st.secrets:
     os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
 try:
-    from generate import StrategyGenerator, OpenAIProvider
+    from generator import StrategyGenerator, OpenAIProvider
+    from swot_prompts import generate_swot
     GENERATOR_AVAILABLE = True
 except Exception:
     StrategyGenerator = None
     OpenAIProvider = None
+    generate_swot = None
     GENERATOR_AVAILABLE = False
 
 def _get_generator():
@@ -73,7 +75,8 @@ def run():
         
         try:
             with st.spinner("Generating SWOT…"):
-                swot = gen.generate_swot(
+                swot = generate_swot(
+                    gen,
                     company=state["company"],
                     industry=state.get("industry", ""),
                     product=state["product"],
