@@ -27,11 +27,16 @@ def _get_generator():
     
     try:
         api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            # Check if it's in secrets but not in env
+            if "OPENAI_API_KEY" in st.secrets:
+                api_key = st.secrets["OPENAI_API_KEY"]
+        
         if api_key and OpenAIProvider is not None:
             provider = OpenAIProvider(model="gpt-4o-mini", api_key=api_key)
             return StrategyGenerator(provider)
-    except Exception:
-        pass
+    except Exception as e:
+        st.error(f"Error creating generator: {e}")
     
     return None
 
