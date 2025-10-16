@@ -169,8 +169,8 @@ class StrategyGenerator:
 # ---------------------- Default System Prompt ----------------------
 
 DEFAULT_SYSTEM_PROMPT = (
-    "You are a concise strategy analyst. Return only strict JSON with the requested keys. "
-    "No prose, no markdown, no backticks. Keep each list item short (<=18 words)."
+    "Return only strict JSON with the requested keys. "
+    "No prose, no markdown, no backticks."
 )
 
 # ---------------------- Quick self-test ----------------------
