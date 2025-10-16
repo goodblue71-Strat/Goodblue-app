@@ -1,32 +1,23 @@
 """
-Strategy content generation engine for your Streamlit app (Step 1).
+SWOT generation engine for GoodBlue Strategy App.
 
 - Pluggable LLM provider (OpenAI) with JSON-only prompts
-- Safe JSON extraction + robust fallbacks (no external calls required)
-- Consistent schema aligned to session_state in your UX spec
+- Safe JSON extraction + robust fallbacks
 
-Usage (in Streamlit button handler):
+Usage:
+    from generate import StrategyGenerator, OpenAIProvider
 
-    #from generate import StrategyGenerator, OpenAIProvider
-
-    provider = OpenAIProvider(model="gpt-4o-mini")  # or None for offline fallback
+    provider = OpenAIProvider(model="gpt-4o-mini")
     gen = StrategyGenerator(provider)
 
-    results = gen.generate_selected_frameworks(
+    swot = gen.generate_swot(
         company=state["company"],
         industry=state["industry"],
         product=state["product"],
         product_feature=state["scope"],
-        frameworks=state["frameworks"],
         notes=state.get("notes"),
-        geo=state.get("geo") or None,
-        peers=["Rival A", "Rival B"]
+        geo=state.get("geo")
     )
-    state["results"].update(results)
-
-    # Optional: auto-generate recommendations
-    state["recs"] = gen.generate_recommendations(state["results"], constraints={})
-
 """
 from __future__ import annotations
 
@@ -97,9 +88,8 @@ def _extract_json(text: str) -> Dict[str, Any]:
             pass
     return {}
 
-# Clamp helper to top-N items per list to keep outputs tidy
-
-def _topn(items: List[str], n: int = 6) -> List[str]:
+def _topn(items: List[str], n: int = 8) -> List[str]:
+    """Keep top N items per list"""
     return items[:n] if len(items) > n else items
 
 # ---------------------- Prompts ----------------------
@@ -108,93 +98,6 @@ _GEN_SYS = (
     "You are a concise strategy analyst. Return only strict JSON with the requested keys. "
     "No prose, no markdown, no backticks. Keep each list item short (<=18 words)."
 )
-
-def _industry_analysis_prompt(
-    company: str,
-    industry: str,
-    product: str,
-    product_feature: str,
-    notes: Optional[str],
-    geo: Optional[str],
-    success_factors: Optional[dict] = None) -> str:
-    try:
-        with open("porter.json", "r") as f:
-            success_factors = json.load(f)
-    except Exception:
-        success_factors = {}
-    return f"""
-Company: {company}
-Industry: {industry}
-Product: {product}
-Product Feature: {product_feature}
-Geography: {geo or "unspecified"}
-Notes: {notes or ""}
-
-Return strict JSON only. No prose, no markdown.
-
-You are given a JSON file of success factors:
-{json.dumps(success_factors, indent=2)}
-
-Task:
-1) List the top 5 industry verticals applicable to the Company, Industry, and Product (exactly 5).
-2) From the provided JSON, choose the 3 most important Critical_success_category for this context (exactly 3).
-3) For each chosen category, select the top 3 success factors (exactly 3 per category), each ≤5 words and contextual to the industry/product.
-
-Each industry item must include:
-- "industry_vertical_name": string
-- "TAM": number in billions (int or float)
-- "Critical_success_category": object with exactly 3 categories; each category has exactly 3 factors (strings ≤5 words)
-
-Example schema:
-{{
-  "industries": [
-    {{
-      "industry_vertical_name": "Financial Services",
-      "TAM": 20,
-      "Critical_success_category": {{
-        "Brand": [
-          "Trust with regulated clients",
-          "Strong financial client references",
-          "Reputation for compliance readiness"
-        ],
-        "Economies_of_Scale": [
-          "Shared R&D costs across global clients",
-          "Specialized financial services teams",
-          "Extensive partner ecosystem"
-        ],
-        "Capital": [
-          "Upfront compliance investment",
-          "Infrastructure resilience",
-          "Integration with legacy banking systems"
-        ]
-      }}
-    }},
-    {{
-      "industry_vertical_name": "Manufacturing",
-      "TAM": 10,
-      "Critical_success_category": {{
-        "Brand": [
-          "Trusted vendor for factory automation",
-          "Proven reliability in industrial workflows",
-          "Reputation for minimizing downtime"
-        ],
-        "Economies_of_Scale": [
-          "Global standardization lowers automation cost",
-          "Shared R&D across manufacturing clients",
-          "Bulk deployments reduce per-unit pricing"
-        ],
-        "Capital": [
-          "Integration with robotics demands investment",
-          "IoT infrastructure requires upfront funding",
-          "Legacy system upgrades need capital"
-        ]
-      }}
-    }}
-  ]
-}}
-""".strip()
-    
-from typing import Optional
 
 _DEF_BENCH_CAPS = [
     "Brand strength",
@@ -228,7 +131,7 @@ TASK: Generate a detailed SWOT for the inputs.
 Constraints:
 - Return **ONLY** valid JSON. No commentary, no code fences.
 - Each of S, W, O, T must have **5–8 bullets**.
-- Each bullet 8–18 words, **specific** (no vague boilerplate like “industry leading”).
+- Each bullet 8–18 words, **specific** (no vague boilerplate like "industry leading").
 - Reflect the local context of **{geo or "the target market"}** and trends in **{industry}**.
 - Cover these capabilities across the set of bullets (spread them; no need to label each):
   {", ".join(_DEF_BENCH_CAPS)}.
@@ -243,83 +146,7 @@ Output schema (must match exactly these keys):
 }}
 """.strip()
 
-def _ansoff_prompt(company: str, industry: str, product: str, notes: Optional[str], geo: Optional[str]) -> str:
-    return f"""
-Company: {company}
-Industry: {industry}
-Product: {product}
-Geography: {geo or "unspecified"}
-Notes: {notes or ""}
-Return strict JSON with keys: market_penetration, market_development, product_development, diversification. Each is an array of short initiatives.
-""".strip()
-
-def _benchmark_prompt(company: str, product: str, peers: List[str], caps: List[str]) -> str:
-    peers_csv = ", ".join(peers)
-    caps_csv = ", ".join(caps)
-    return f"""
-Compare {company} ({product}) against peers: {peers_csv}.
-Capabilities to rate: {caps_csv}.
-Return JSON: {{"peers": ["{peers_csv}"], "table": [{{"capability": str, "{company}": str, "{peers[0]}": str, "{peers[1] if len(peers)>1 else 'PeerB'}": str}} ...]}}. Ratings must be one of: Low, Medium, High, Best-in-class.
-Keep table length = {len(caps)}.
-""".strip()
-
-def _recs_prompt(company: str, product: str, results: Dict[str, Any]) -> str:
-    context = json.dumps(results, ensure_ascii=False)
-    return f"""
-Based on this analysis JSON: {context}
-Return JSON array of 5 recommendation objects with keys: title, impact (1-5), effort (1-5), rationale.
-Keep titles crisp; impact×effort should reflect SWOT threats/opportunities and Ansoff moves.
-""".strip()
-
-# ---------------------- Fallback (offline) heuristics ----------------------
-
-def _fallback_ind() -> Dict[str, List[str]]:
-    return {
-        "industries": [
-            {
-                "industry_vertical_name": "Financial Services",
-                "TAM": 20,
-                "Critical_success_category": {
-                    "Brand": [
-                        "Trust with regulated clients",
-                        "Strong financial client references",
-                        "Reputation for compliance readiness"
-                        ],
-                    "Economies_of_Scale": [
-                        "Shared R&D costs across global clients",
-                        "Specialized financial services teams",
-                        "Extensive partner ecosystem"
-                        ],
-                    "Capital": [
-                        "Upfront compliance investment",
-                        "Infrastructure resilience",
-                        "Integration with legacy banking systems"
-                        ]
-                }
-            },
-            {
-                "industry_vertical_name": "Manufacturing",
-                "TAM": 10,
-                "Critical_success_category": {
-                    "Brand": [
-                        "Trusted vendor for factory automation",
-                        "Proven reliability in industrial workflows",
-                        "Reputation for minimizing downtime"
-                        ],
-                    "Economies_of_Scale": [
-                        "Global standardization lowers automation cost",
-                        "Shared R&D across manufacturing clients",
-                        "Bulk deployments reduce per-unit pricing"
-                        ],
-                    "Capital": [
-                        "Integration with robotics demands investment",
-                        "IoT infrastructure requires upfront funding",
-                        "Legacy system upgrades need capital"
-                        ]
-                    }
-                }
-            ]
-        }
+# ---------------------- Fallback ----------------------
 
 def _fallback_swot() -> Dict[str, Any]:
     return {
@@ -346,52 +173,12 @@ def _fallback_swot() -> Dict[str, Any]:
         ],
     }
 
-def _fallback_ansoff() -> Dict[str, List[str]]:
-    return {
-        "market_penetration": ["Bundle add-ons for existing customers", "Loyalty pricing to reduce churn"],
-        "market_development": ["Enter 1–2 adjacent regions", "Activate reseller partners"],
-        "product_development": ["Launch analytics-lite", "Managed service option"],
-        "diversification": ["Test vertical solution pack", "Hardware+SaaS starter kit"],
-    }
-
-def _fallback_benchmark(company: str, peers: List[str], caps: List[str]) -> Dict[str, Any]:
-    table = []
-    scale = ["Low", "Medium", "High"]
-    for i, cap in enumerate(caps):
-        row = {"capability": cap, company: scale[min(2, (i+1) % 3)]}
-        for p in peers:
-            row[p] = scale[(i + len(p)) % 3]
-        table.append(row)
-    return {"peers": peers, "table": table}
-
 # ---------------------- Core Generator ----------------------
 
 @dataclass
 class StrategyGenerator:
     provider: Optional[LLMProvider] = None
 
-    # ---- Public API ----
-    def generate_Industry_Analysis(
-        self, 
-        company: str, 
-        industry: str, 
-        product: str, 
-        product_feature: str,
-        *, 
-        notes: Optional[str] = None, 
-        geo: Optional[str] = None
-    ) -> Dict[str, Any]:
-        if self.provider:
-            out = _extract_json(
-                self.provider.complete(
-                    _GEN_SYS, 
-                    _industry_analysis_prompt(company, industry, product, product_feature, notes, geo)
-                )
-            )
-            return out
-        # fallback
-        return _fallback_ind()
-        
     def generate_swot(
         self, 
         company: str, 
@@ -402,6 +189,7 @@ class StrategyGenerator:
         notes: Optional[str] = None, 
         geo: Optional[str] = None
     ) -> Dict[str, List[str]]:
+        """Generate SWOT analysis using LLM provider or fallback."""
         if self.provider:
             out = _extract_json(
                 self.provider.complete(
@@ -418,178 +206,15 @@ class StrategyGenerator:
         # fallback
         return _fallback_swot()
 
-    def generate_ansoff(
-        self, 
-        company: str, 
-        industry: str, 
-        product: str, 
-        *, 
-        notes: Optional[str] = None, 
-        geo: Optional[str] = None
-    ) -> Dict[str, List[str]]:
-        if self.provider:
-            out = _extract_json(
-                self.provider.complete(_GEN_SYS, _ansoff_prompt(company, industry, product, notes, geo))
-            )
-            mp = _coerce_list(out.get("market_penetration"))
-            md = _coerce_list(out.get("market_development"))
-            pd = _coerce_list(out.get("product_development"))
-            dv = _coerce_list(out.get("diversification"))
-            if any([mp, md, pd, dv]):
-                return {
-                    "market_penetration": _topn(mp),
-                    "market_development": _topn(md),
-                    "product_development": _topn(pd),
-                    "diversification": _topn(dv),
-                }
-        return _fallback_ansoff()
-
-    def generate_benchmark(
-        self, 
-        company: str, 
-        product: str, 
-        *, 
-        peers: Optional[List[str]] = None, 
-        caps: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        peers = peers or ["PeerA", "PeerB"]
-        caps = caps or _DEF_BENCH_CAPS
-        if self.provider:
-            out = _extract_json(
-                self.provider.complete(_GEN_SYS, _benchmark_prompt(company, product, peers, caps))
-            )
-            table = out.get("table")
-            if isinstance(table, list) and table:
-                # keep only declared columns
-                cleaned = []
-                for row in table:
-                    if not isinstance(row, dict):
-                        continue
-                    base = {"capability": str(row.get("capability", "")).strip()}
-                    if not base["capability"]:
-                        continue
-                    base[company] = str(row.get(company, "")).strip() or "Medium"
-                    for p in peers:
-                        base[p] = str(row.get(p, "")).strip() or "Medium"
-                    cleaned.append(base)
-                return {"peers": peers, "table": cleaned[: len(caps)]}
-        return _fallback_benchmark(company, peers, caps)
-
-    def generate_recommendations(
-        self, 
-        results: Dict[str, Any], 
-        *, 
-        top_k: int = 5, 
-        constraints: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
-        # Heuristic scaffold using SWOT + Ansoff if no LLM
-        def _score(title: str) -> Dict[str, int]:
-            # naive scoring based on keywords
-            t = title.lower()
-            impact = 5 if any(k in t for k in ["bundle", "platform", "ai", "oem", "security"]) else 4
-            effort = 3 if any(k in t for k in ["managed", "new region"]) else 2
-            return {"impact": impact, "effort": effort}
-
-        if self.provider:
-            try:
-                out = _extract_json(self.provider.complete(_GEN_SYS, _recs_prompt("", "", results)))
-                if isinstance(out, list) and out:
-                    cleaned = []
-                    for item in out[: top_k]:
-                        if not isinstance(item, dict):
-                            continue
-                        title = str(item.get("title", "")).strip()
-                        if not title:
-                            continue
-                        impact = int(item.get("impact", 3))
-                        effort = int(item.get("effort", 2))
-                        rationale = str(item.get("rationale", "")).strip()
-                        cleaned.append({
-                            "title": title, 
-                            "impact": max(1, min(5, impact)), 
-                            "effort": max(1, min(5, effort)), 
-                            "rationale": rationale
-                        })
-                    if cleaned:
-                        return cleaned
-            except Exception:
-                pass
-
-        # Fallback: derive from inputs
-        swot = results.get("SWOT", {})
-        ansoff = results.get("Ansoff", {})
-        seeds = []
-        seeds += ansoff.get("market_penetration", [])
-        seeds += ansoff.get("product_development", [])
-        seeds += swot.get("O", [])
-        seeds = [s for s in seeds if s]
-        if not seeds:
-            seeds = [
-                "OEM bundle program",
-                "Managed calibration add-on",
-                "Security proof pack",
-                "SKU simplification",
-                "Launch design partner pilot",
-            ]
-        recs = []
-        for s in seeds[: top_k]:
-            sc = _score(s)
-            recs.append({
-                "title": s, 
-                "impact": sc["impact"], 
-                "effort": sc["effort"], 
-                "rationale": "Derived from analysis."
-            })
-        return recs
-
-    def generate_selected_frameworks(
-        self,
-        *,
-        company: str,
-        industry: str,
-        product: str,
-        product_feature: str,
-        frameworks: List[str],
-        notes: Optional[str] = None,
-        geo: Optional[str] = None,
-        peers: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
-        out: Dict[str, Any] = {}
-        fwset = set([f.strip() for f in frameworks])
-        if "Industry Analysis" in fwset:
-            out["ind"] = self.generate_Industry_Analysis(
-                company, industry, product, product_feature, notes=notes, geo=geo
-            )
-        if "SWOT" in fwset:
-            out["SWOT"] = self.generate_swot(
-                company, industry, product, product_feature, notes=notes, geo=geo
-            )
-        if "Ansoff" in fwset:
-            out["Ansoff"] = self.generate_ansoff(company, industry, product, notes=notes, geo=geo)
-        if "Benchmark" in fwset:
-            out["Benchmark"] = self.generate_benchmark(company, product, peers=peers)
-        if "Fit Matrix" in fwset:
-            # simple placeholder matrix
-            out["Fit"] = {"matrix": [
-                {"capability": "Core platform", "fit": "High"},
-                {"capability": "Go-to-market", "fit": "Medium"},
-                {"capability": "Operations", "fit": "Medium"},
-            ]}
-        return out
-
 # ---------------------- Quick self-test ----------------------
 if __name__ == "__main__":
     gen = StrategyGenerator(provider=None)  # offline fallback
-    res = gen.generate_selected_frameworks(
+    swot = gen.generate_swot(
         company="ACME Robotics",
         industry="Manufacturing",
         product="Industrial IoT Sensors",
         product_feature="Identifying bearing failure",
-        frameworks=["SWOT", "Ansoff", "Benchmark"],
         notes="Mid-market focus",
-        geo="US",
-        peers=["Rival A", "Rival B"],
+        geo="US"
     )
-    print(json.dumps(res, indent=2))
-    recs = gen.generate_recommendations(res)
-    print(json.dumps(recs, indent=2))
+    print(json.dumps(swot, indent=2))
