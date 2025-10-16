@@ -23,6 +23,7 @@ except Exception:
 def _get_generator():
     """Returns generator if available, None otherwise"""
     if not GENERATOR_AVAILABLE:
+        st.error("Generator modules not available. Check if generator.py and swot_prompts.py exist.")
         return None
     
     try:
@@ -32,11 +33,28 @@ def _get_generator():
             if "OPENAI_API_KEY" in st.secrets:
                 api_key = st.secrets["OPENAI_API_KEY"]
         
-        if api_key and OpenAIProvider is not None:
-            provider = OpenAIProvider(model="gpt-4o-mini", api_key=api_key)
-            return StrategyGenerator(provider)
+        if not api_key:
+            st.error("API key not found in environment or secrets.")
+            return None
+            
+        if OpenAIProvider is None:
+            st.error("OpenAIProvider class is None - import failed.")
+            return None
+            
+        provider = OpenAIProvider(model="gpt-4o-mini", api_key=api_key)
+        gen = StrategyGenerator(provider)
+        
+        if gen.is_available():
+            st.success("✅ Generator created successfully!")
+            return gen
+        else:
+            st.error("Generator created but provider not available.")
+            return None
+            
     except Exception as e:
-        st.error(f"Error creating generator: {e}")
+        st.error(f"Error creating generator: {type(e).__name__}: {e}")
+        import traceback
+        st.code(traceback.format_exc())
     
     return None
 
