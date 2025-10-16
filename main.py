@@ -122,10 +122,26 @@ if current == "Home":
     st.title("Choose your strategy framework")
     st.caption("Select a framework to begin your analysis.")
     
-    # Responsive column layout: 4 on desktop, 2 on tablet, 1 on mobile
-    cols = st.columns(4)
-    for i, fw in enumerate(FRAMEWORKS):
-        with cols[i % 4]:
+    # Create two rows of 4 columns each for proper alignment
+    # First row (frameworks 0-3)
+    cols_row1 = st.columns(4)
+    for i in range(4):
+        with cols_row1[i]:
+            fw = FRAMEWORKS[i]
+            if st.button(f"{fw['emoji']} {fw['label']}", use_container_width=True, key=f"fw_{fw['key']}"):
+                st.session_state["framework"] = fw["key"]
+                if fw["key"] == "swot":
+                    goto("SWOT")
+                else:
+                    st.session_state["pending_fw"] = fw["label"]
+                    goto("ComingSoon")
+            st.caption(fw['desc'])
+    
+    # Second row (frameworks 4-7)
+    cols_row2 = st.columns(4)
+    for i in range(4, 8):
+        with cols_row2[i - 4]:
+            fw = FRAMEWORKS[i]
             if st.button(f"{fw['emoji']} {fw['label']}", use_container_width=True, key=f"fw_{fw['key']}"):
                 st.session_state["framework"] = fw["key"]
                 if fw["key"] == "swot":
