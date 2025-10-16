@@ -35,11 +35,17 @@ st.markdown("""
   /* Better spacing for title and caption */
   h1 {
     margin-bottom: 0.5rem !important;
-    margin-top: 1rem !important;
+    margin-top: 0rem !important;
   }
   
   .stCaption {
     margin-bottom: 2rem !important;
+    font-size: 0.85rem !important;
+  }
+  
+  /* Row spacing */
+  .row-spacing {
+    margin-bottom: 1.5rem;
   }
   
   /* Button spacing improvements */
