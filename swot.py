@@ -46,7 +46,7 @@ def _text_to_list(txt): return [x.strip(" \t-•") for x in (txt or "").splitlin
 
 # ---------- Page Entrypoint ----------
 def run():
-    st.set_page_config(page_title=APP_NAME, page_icon="🧩", layout="wide")
+    st.set_page_config(page_title=APP_NAME, page_icon="images/favicon.ico", layout="wide")
     st.title(APP_NAME)
 
     if "step" not in st.session_state:
