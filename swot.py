@@ -48,7 +48,6 @@ def _get_generator():
         gen = StrategyGenerator(provider)
         
         if gen.is_available():
-            st.success("✅ Generator created successfully!")
             return gen
         else:
             st.error("Generator created but provider not available.")
