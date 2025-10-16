@@ -75,8 +75,9 @@ def run():
             with st.spinner("Generating SWOT…"):
                 swot = gen.generate_swot(
                     company=state["company"],
-                    scope=state["scope"],
+                    industry=state.get("industry", ""),
                     product=state["product"],
+                    product_feature=state["scope"],
                     notes=state["notes"],
                     geo=state["geo"],
                 )
