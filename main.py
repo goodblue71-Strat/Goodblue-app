@@ -128,7 +128,7 @@ if current == "Home":
     ]
 
     st.title("Choose your strategy framework")
-    st.caption("Select a framework to begin your analysis.")
+    st.markdown("<p style='font-size: 1.2rem; font-weight: 600; color: #4a4a4a; margin-top: -0.5rem; margin-bottom: 2rem;'>Select a framework to begin your analysis.</p>", unsafe_allow_html=True)
     
     # First row (frameworks 0-3)
     cols_row1 = st.columns(4)
