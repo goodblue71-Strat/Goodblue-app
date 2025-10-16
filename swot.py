@@ -85,7 +85,7 @@ def run():
         except Exception as e:
             st.error(f"Generation failed: {e}")
 
-    st.progress((st.session_state.step + 1) / 3, text=f"Step {st.session_state.step + 1} of 3")
+    st.progress((st.session_state.step + 1) / 4, text=f"Step {st.session_state.step + 1} of 4")
 
     # Check if generator is available and show warning if not
     if _get_generator() is None:
@@ -132,8 +132,37 @@ def run():
                 sw["T"] = _text_to_list(new_T)
                 st.session_state.step = 2
 
-    # ---------- Step 2: Export ----------
+    # ---------- Step 2: Edit SWOT ----------
     elif st.session_state.step == 2:
+        st.subheader("Edit SWOT Results")
+        sw = state["results"]["SWOT"]
+        cS, cW, cO, cT = st.columns(4)
+        with cS: 
+            new_S = st.text_area("Strengths", _list_to_text(sw.get("S")), height=180)
+        with cW: 
+            new_W = st.text_area("Weaknesses", _list_to_text(sw.get("W")), height=180)
+        with cO: 
+            new_O = st.text_area("Opportunities", _list_to_text(sw.get("O")), height=180)
+        with cT: 
+            new_T = st.text_area("Threats", _list_to_text(sw.get("T")), height=180)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("← Back to View", use_container_width=True):
+                st.session_state.step = 1
+                st.rerun()
+        with col2:
+            if st.button("Save & Continue →", type="primary", use_container_width=True):
+                # Save edited SWOT
+                sw["S"] = _text_to_list(new_S)
+                sw["W"] = _text_to_list(new_W)
+                sw["O"] = _text_to_list(new_O)
+                sw["T"] = _text_to_list(new_T)
+                st.session_state.step = 3
+                st.rerun()
+
+    # ---------- Step 3: Export ----------
+    elif st.session_state.step == 3:
         st.subheader("Export")
         sw = state["results"]["SWOT"]
         
