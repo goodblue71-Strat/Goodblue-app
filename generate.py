@@ -194,19 +194,7 @@ Example schema:
 }}
 """.strip()
     
-def _swot_prompt(company: str, industry: str, product: str, product_feature: str, notes: Optional[str], geo: Optional[str]) -> str:
-    return f"""
-Company: {company}
-Industry: {industry}
-Product: {product}
-Product Feature: {product_feature}
-Geography: {geo or "unspecified"}
-Notes: {notes or ""}
-
-Produce JSON exactly with keys S, W, O, T. Each is an array of short bullets.
-Example schema:
-{{"S":[],"W":[],"O":[],"T":[]}}
-""".strip()
+from typing import Optional
 
 _DEF_BENCH_CAPS = [
     "Brand strength",
@@ -218,6 +206,42 @@ _DEF_BENCH_CAPS = [
     "Implementation complexity",
     "Support/Success"
 ]
+
+def _swot_prompt(
+    company: str,
+    industry: str,
+    product: str,
+    product_feature: str,
+    notes: Optional[str],
+    geo: Optional[str]
+) -> str:
+    return f"""
+Company: {company}
+Industry: {industry}
+Product: {product}
+Product Feature: {product_feature}
+Geography: {geo or "unspecified"}
+Notes: {notes or ""}
+
+TASK: Generate a detailed SWOT for the inputs.
+
+Constraints:
+- Return **ONLY** valid JSON. No commentary, no code fences.
+- Each of S, W, O, T must have **5–8 bullets**.
+- Each bullet 8–18 words, **specific** (no vague boilerplate like “industry leading”).
+- Reflect the local context of **{geo or "the target market"}** and trends in **{industry}**.
+- Cover these capabilities across the set of bullets (spread them; no need to label each):
+  {", ".join(_DEF_BENCH_CAPS)}.
+- Avoid duplicates; no trailing commas.
+
+Output schema (must match exactly these keys):
+{{
+  "S": ["...", "..."],
+  "W": ["...", "..."],
+  "O": ["...", "..."],
+  "T": ["...", "..."]
+}}
+""".strip()
 
 def _ansoff_prompt(company: str, industry: str, product: str, notes: Optional[str], geo: Optional[str]) -> str:
     return f"""
