@@ -207,7 +207,7 @@ Product: {product}
 Geography: {geo or "unspecified"}
 Notes: {notes or ""}
 
-Produce JSON exactly with keys S, W, O, T. Each is an array of short bullets.
+Produce JSON exactly with keys S, W, O, T. Each is an array of bullets.
 Example schema:
 {{"S":[],"W":[],"O":[],"T":[]}}
 """.strip()
