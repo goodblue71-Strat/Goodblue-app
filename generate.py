@@ -1,23 +1,16 @@
 """
-SWOT generation engine for GoodBlue Strategy App.
+Base LLM generator for GoodBlue Strategy App.
 
-- Pluggable LLM provider (OpenAI) with JSON-only prompts
-- Safe JSON extraction + robust fallbacks
+Provides common LLM provider interface and utilities that can be reused
+across all framework modules (SWOT, Ansoff, Porter's 5 Forces, etc.)
 
 Usage:
-    from generate import StrategyGenerator, OpenAIProvider
-
-    provider = OpenAIProvider(model="gpt-4o-mini")
+    from generator import StrategyGenerator, OpenAIProvider
+    
+    provider = OpenAIProvider(model="gpt-4o-mini", api_key="...")
     gen = StrategyGenerator(provider)
-
-    swot = gen.generate_swot(
-        company=state["company"],
-        industry=state["industry"],
-        product=state["product"],
-        product_feature=state["scope"],
-        notes=state.get("notes"),
-        geo=state.get("geo")
-    )
+    
+    result = gen.generate(system_prompt, user_prompt)
 """
 from __future__ import annotations
 
@@ -30,11 +23,21 @@ from typing import Any, Dict, List, Optional
 # ---------------------- LLM Provider Abstraction ----------------------
 
 class LLMProvider:
-    def complete(self, system_prompt: str, user_prompt: str, *, temperature: float = 0.2, max_tokens: int = 1200) -> str:
+    """Abstract base class for LLM providers."""
+    def complete(
+        self, 
+        system_prompt: str, 
+        user_prompt: str, 
+        *, 
+        temperature: float = 0.2, 
+        max_tokens: int = 1200
+    ) -> str:
         raise NotImplementedError
 
 class OpenAIProvider(LLMProvider):
-    """OpenAI chat completions provider. Requires `openai` >= 1.0.0.
+    """OpenAI chat completions provider. 
+    
+    Requires `openai` >= 1.0.0.
     Set OPENAI_API_KEY in env or pass api_key.
     """
     def __init__(self, model: str = "gpt-4o-mini", api_key: Optional[str] = None):
@@ -46,10 +49,18 @@ class OpenAIProvider(LLMProvider):
         self.model = model
         self.client = self._OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
 
-    def complete(self, system_prompt: str, user_prompt: str, *, temperature: float = 0.2, max_tokens: int = 1200) -> str:
+    def complete(
+        self, 
+        system_prompt: str, 
+        user_prompt: str, 
+        *, 
+        temperature: float = 0.2, 
+        max_tokens: int = 1200
+    ) -> str:
         resp = self.client.chat.completions.create(
             model=self.model,
             temperature=temperature,
+            max_tokens=max_tokens,
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -60,6 +71,7 @@ class OpenAIProvider(LLMProvider):
 # ---------------------- Utilities ----------------------
 
 def _coerce_list(x: Any) -> List[str]:
+    """Coerce value to list of strings."""
     if x is None:
         return []
     if isinstance(x, list):
@@ -69,7 +81,9 @@ def _coerce_list(x: Any) -> List[str]:
 _JSON_BLOCK_RE = re.compile(r"\{[\s\S]*\}")
 
 def _extract_json(text: str) -> Dict[str, Any]:
-    """Try to parse JSON from the model output. Accepts raw JSON or fenced blocks.
+    """Try to parse JSON from the model output. 
+    
+    Accepts raw JSON or fenced blocks.
     Falls back to empty dict on failure.
     """
     if not text:
@@ -88,133 +102,88 @@ def _extract_json(text: str) -> Dict[str, Any]:
             pass
     return {}
 
-def _topn(items: List[str], n: int = 8) -> List[str]:
-    """Keep top N items per list"""
+def topn(items: List[str], n: int = 8) -> List[str]:
+    """Keep top N items from list."""
     return items[:n] if len(items) > n else items
 
-# ---------------------- Prompts ----------------------
+def coerce_list(x: Any) -> List[str]:
+    """Public wrapper for _coerce_list."""
+    return _coerce_list(x)
 
-_GEN_SYS = (
-    "You are a concise strategy analyst. Return only strict JSON with the requested keys. "
-    "No prose, no markdown, no backticks. Keep each list item short (<=18 words)."
-)
-
-_DEF_BENCH_CAPS = [
-    "Brand strength",
-    "Distribution/Channels",
-    "Pricing/Packaging",
-    "Integrations/Partner ecosystem",
-    "Security/Compliance",
-    "Analytics/AI",
-    "Implementation complexity",
-    "Support/Success"
-]
-
-def _swot_prompt(
-    company: str,
-    industry: str,
-    product: str,
-    product_feature: str,
-    notes: Optional[str],
-    geo: Optional[str]
-) -> str:
-    return f"""
-Company: {company}
-Industry: {industry}
-Product: {product}
-Product Feature: {product_feature}
-Geography: {geo or "unspecified"}
-Notes: {notes or ""}
-
-TASK: Generate a detailed SWOT for the inputs.
-
-Constraints:
-- Return **ONLY** valid JSON. No commentary, no code fences.
-- Each of S, W, O, T must have **5–8 bullets**.
-- Each bullet 8–18 words, **specific** (no vague boilerplate like "industry leading").
-- Reflect the local context of **{geo or "the target market"}** and trends in **{industry}**.
-- Cover these capabilities across the set of bullets (spread them; no need to label each):
-  {", ".join(_DEF_BENCH_CAPS)}.
-- Avoid duplicates; no trailing commas.
-
-Output schema (must match exactly these keys):
-{{
-  "S": ["...", "..."],
-  "W": ["...", "..."],
-  "O": ["...", "..."],
-  "T": ["...", "..."]
-}}
-""".strip()
-
-# ---------------------- Fallback ----------------------
-
-def _fallback_swot() -> Dict[str, Any]:
-    return {
-        "S": [
-            "Clear value proposition",
-            "Growing customer base",
-            "Experienced leadership",
-            "Strong partner interest",
-        ],
-        "W": [
-            "Limited brand awareness",
-            "Thin mid-market coverage",
-            "Inconsistent messaging",
-        ],
-        "O": [
-            "Upsell existing accounts",
-            "New geography pilots",
-            "Alliances with integrators",
-        ],
-        "T": [
-            "Price pressure from low-cost rivals",
-            "Long sales cycles",
-            "Security/compliance scrutiny",
-        ],
-    }
+def extract_json(text: str) -> Dict[str, Any]:
+    """Public wrapper for _extract_json."""
+    return _extract_json(text)
 
 # ---------------------- Core Generator ----------------------
 
 @dataclass
 class StrategyGenerator:
+    """Base strategy content generator.
+    
+    Provides common interface for generating strategy framework content
+    using pluggable LLM providers.
+    """
     provider: Optional[LLMProvider] = None
 
-    def generate_swot(
+    def generate(
         self, 
-        company: str, 
-        industry: str, 
-        product: str,
-        product_feature: str,
-        *, 
-        notes: Optional[str] = None, 
-        geo: Optional[str] = None
-    ) -> Dict[str, List[str]]:
-        """Generate SWOT analysis using LLM provider or fallback."""
-        if self.provider:
-            out = _extract_json(
-                self.provider.complete(
-                    _GEN_SYS, 
-                    _swot_prompt(company, industry, product, product_feature, notes, geo)
-                )
-            )
-            S = _coerce_list(out.get("S"))
-            W = _coerce_list(out.get("W"))
-            O = _coerce_list(out.get("O"))
-            T = _coerce_list(out.get("T"))
-            if any([S, W, O, T]):
-                return {"S": _topn(S), "W": _topn(W), "O": _topn(O), "T": _topn(T)}
-        # fallback
-        return _fallback_swot()
+        system_prompt: str, 
+        user_prompt: str,
+        *,
+        temperature: float = 0.2,
+        max_tokens: int = 1200
+    ) -> str:
+        """Generate raw text response from LLM."""
+        if not self.provider:
+            raise ValueError("No LLM provider configured")
+        return self.provider.complete(
+            system_prompt, 
+            user_prompt, 
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+    
+    def generate_json(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        temperature: float = 0.2,
+        max_tokens: int = 1200
+    ) -> Dict[str, Any]:
+        """Generate and parse JSON response from LLM."""
+        if not self.provider:
+            return {}
+        response = self.provider.complete(
+            system_prompt,
+            user_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+        return _extract_json(response)
+    
+    def is_available(self) -> bool:
+        """Check if generator has a valid provider."""
+        return self.provider is not None
+
+# ---------------------- Default System Prompt ----------------------
+
+DEFAULT_SYSTEM_PROMPT = (
+    "You are a concise strategy analyst. Return only strict JSON with the requested keys. "
+    "No prose, no markdown, no backticks. Keep each list item short (<=18 words)."
+)
 
 # ---------------------- Quick self-test ----------------------
 if __name__ == "__main__":
-    gen = StrategyGenerator(provider=None)  # offline fallback
-    swot = gen.generate_swot(
-        company="ACME Robotics",
-        industry="Manufacturing",
-        product="Industrial IoT Sensors",
-        product_feature="Identifying bearing failure",
-        notes="Mid-market focus",
-        geo="US"
-    )
-    print(json.dumps(swot, indent=2))
+    # Test without provider
+    gen = StrategyGenerator(provider=None)
+    print(f"Generator available: {gen.is_available()}")
+    
+    # Test with mock provider
+    class MockProvider(LLMProvider):
+        def complete(self, system_prompt: str, user_prompt: str, **kwargs) -> str:
+            return '{"test": "data"}'
+    
+    gen_with_provider = StrategyGenerator(provider=MockProvider())
+    result = gen_with_provider.generate_json("system", "user")
+    print(f"Mock result: {result}")
