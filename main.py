@@ -9,12 +9,13 @@ st.set_page_config(page_title="GoodBlue Strategy App", page_icon="images/favicon
 # ---- RESPONSIVE LAYOUT CSS ----
 st.markdown("""
 <style>
-  /* Remove default Streamlit padding */
+  /* Reset Streamlit's default padding */
   .block-container {
-    padding-top: 0rem;
-    padding-bottom: 0rem;
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-top: 2rem !important;
+    padding-bottom: 3rem !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    max-width: 1200px !important;
   }
   
   /* Main app wrapper - flexbox layout */
@@ -25,31 +26,63 @@ st.markdown("""
   }
   
   /* Content area grows to fill available space */
-  .main .block-container {
+  .main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
   }
   
-  /* Responsive padding adjustments */
+  /* Better spacing for title and caption */
+  h1 {
+    margin-bottom: 0.5rem !important;
+    margin-top: 1rem !important;
+  }
+  
+  .stCaption {
+    margin-bottom: 2rem !important;
+  }
+  
+  /* Button spacing improvements */
+  .stButton {
+    margin-bottom: 0.5rem !important;
+  }
+  
+  .stButton > button {
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    height: auto !important;
+    min-height: 3rem !important;
+  }
+  
+  /* Column spacing */
+  [data-testid="column"] {
+    padding: 0 0.5rem !important;
+  }
+  
+  /* Responsive padding adjustments for mobile */
   @media (max-width: 768px) {
     .block-container {
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
+      padding-top: 1rem !important;
+      padding-bottom: 2rem !important;
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
     }
     
-    .main .block-container {
-      padding-top: 0.5rem;
-      padding-bottom: 0.5rem;
+    [data-testid="column"] {
+      padding: 0 0.25rem !important;
+      margin-bottom: 1rem;
+    }
+    
+    .stButton > button {
+      min-height: 2.5rem !important;
+      font-size: 0.9rem !important;
     }
   }
   
-  /* Ensure content is scrollable if needed */
-  .main {
-    overflow-y: auto;
-  }
+  /* Hide Streamlit branding elements for cleaner look */
+  #MainMenu {visibility: hidden;}
+  footer {visibility: hidden;}
+  header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -89,10 +122,8 @@ if current == "Home":
     st.title("Choose your strategy framework")
     st.caption("Select a framework to begin your analysis.")
     
-    st.write("")  # Add some spacing
-
     # Responsive column layout: 4 on desktop, 2 on tablet, 1 on mobile
-    cols = st.columns([1, 1, 1, 1])
+    cols = st.columns(4)
     for i, fw in enumerate(FRAMEWORKS):
         with cols[i % 4]:
             if st.button(f"{fw['emoji']} {fw['label']}", use_container_width=True, key=f"fw_{fw['key']}"):
