@@ -40,7 +40,7 @@ st.markdown("""
   
   .stCaption {
     margin-bottom: 2rem !important;
-    font-size: 0.85rem !important;
+    font-size: 1.1rem !important;
   }
   
   /* Row spacing */
@@ -128,7 +128,6 @@ if current == "Home":
     st.title("Choose your strategy framework")
     st.caption("Select a framework to begin your analysis.")
     
-    # Create two rows of 4 columns each for proper alignment
     # First row (frameworks 0-3)
     cols_row1 = st.columns(4)
     for i in range(4):
@@ -141,7 +140,10 @@ if current == "Home":
                 else:
                     st.session_state["pending_fw"] = fw["label"]
                     goto("ComingSoon")
-            st.caption(fw['desc'])
+            st.markdown(f"<p style='font-size: 0.8rem; color: #6c757d; margin-top: -0.5rem;'>{fw['desc']}</p>", unsafe_allow_html=True)
+    
+    # Add more spacing between rows
+    st.markdown("<div style='margin: 2.5rem 0;'></div>", unsafe_allow_html=True)
     
     # Second row (frameworks 4-7)
     cols_row2 = st.columns(4)
@@ -155,7 +157,7 @@ if current == "Home":
                 else:
                     st.session_state["pending_fw"] = fw["label"]
                     goto("ComingSoon")
-            st.caption(fw['desc'])
+            st.markdown(f"<p style='font-size: 0.8rem; color: #6c757d; margin-top: -0.5rem;'>{fw['desc']}</p>", unsafe_allow_html=True)
 
 elif current == "SWOT":
     try:
