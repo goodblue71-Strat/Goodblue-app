@@ -40,7 +40,9 @@ st.markdown("""
   
   .stCaption {
     margin-bottom: 2rem !important;
-    font-size: 1.1rem !important;
+    font-size: 1.2rem !important;
+    font-weight: 600 !important;
+    color: #4a4a4a !important;
   }
   
   /* Row spacing */
@@ -140,7 +142,7 @@ if current == "Home":
                 else:
                     st.session_state["pending_fw"] = fw["label"]
                     goto("ComingSoon")
-            st.markdown(f"<p style='font-size: 0.8rem; color: #6c757d; margin-top: -0.5rem;'>{fw['desc']}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size: 0.8rem; color: #6c757d; margin-top: -0.75rem; padding: 0 0.5rem;'>{fw['desc']}</p>", unsafe_allow_html=True)
     
     # Add more spacing between rows
     st.markdown("<div style='margin: 2.5rem 0;'></div>", unsafe_allow_html=True)
@@ -157,7 +159,7 @@ if current == "Home":
                 else:
                     st.session_state["pending_fw"] = fw["label"]
                     goto("ComingSoon")
-            st.markdown(f"<p style='font-size: 0.8rem; color: #6c757d; margin-top: -0.5rem;'>{fw['desc']}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='font-size: 0.8rem; color: #6c757d; margin-top: -0.75rem; padding: 0 0.5rem;'>{fw['desc']}</p>", unsafe_allow_html=True)
 
 elif current == "SWOT":
     try:
