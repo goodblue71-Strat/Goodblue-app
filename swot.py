@@ -82,6 +82,7 @@ def run():
                 state["results"]["SWOT"] = swot
             st.toast("SWOT generated.", icon="✅")
             st.session_state.step = 1
+            st.rerun()
         except Exception as e:
             st.error(f"Generation failed: {e}")
 
