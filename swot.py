@@ -14,7 +14,10 @@ try:
     from generator import StrategyGenerator, OpenAIProvider
     from swot_prompts import generate_swot
     GENERATOR_AVAILABLE = True
-except Exception:
+except Exception as e:
+    st.error(f"Failed to import generator modules: {type(e).__name__}: {e}")
+    import traceback
+    st.code(traceback.format_exc())
     StrategyGenerator = None
     OpenAIProvider = None
     generate_swot = None
