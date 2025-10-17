@@ -418,23 +418,41 @@ def run():
             st.markdown(f"*{sw['priority_table_introduction']}*")
             st.markdown("")
         
-        # Collect high and medium priority items
+        # Calculate the center threshold for impact
+        all_impacts = []
+        for category in ['S', 'W', 'O', 'T']:
+            items = sw.get(category, [])
+            for item in items:
+                if isinstance(item, dict):
+                    all_impacts.append(item.get('impact', 0))
+        
+        # Center of impact range (midpoint between min and max)
+        if all_impacts:
+            min_impact_threshold = min(all_impacts)
+            max_impact_threshold = max(all_impacts)
+            center_impact = (min_impact_threshold + max_impact_threshold) / 2
+        else:
+            center_impact = 5  # default
+        
+        # Collect high and medium priority items with impact >= center
         priority_items = []
         for category in ['S', 'W', 'O', 'T']:
             items = sw.get(category, [])
             for idx, item in enumerate(items, 1):
                 if isinstance(item, dict):
                     priority = item.get('priority', 'low')
-                    if priority in ['high', 'medium']:
+                    impact = item.get('impact', 0)
+                    # Only include if impact is at or above center threshold
+                    if priority in ['high', 'medium'] and impact >= center_impact:
                         priority_items.append({
                             'ref': f"{category}{idx}",
                             'category': category,
                             'text': item.get('text', ''),
                             'priority': priority,
                             'solution': item.get('solution', 'No solution provided'),
-                            'impact': item.get('impact', 0),
+                            'impact': impact,
                             'control': item.get('control', 0),
-                            'score': item.get('impact', 0) + item.get('control', 0)
+                            'score': impact + item.get('control', 0)
                         })
         
         # Sort by combined score (impact + control), highest first
@@ -475,7 +493,7 @@ def run():
                 use_container_width=True
             )
         else:
-            st.info("No high or medium priority items identified")
+            st.info("No high or medium priority items identified with sufficient impact")
         
         # Priority Table Takeaway
         if sw.get("priority_table_takeaway"):
