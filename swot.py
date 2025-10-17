@@ -223,67 +223,160 @@ def run():
         
         # Create priority matrix visualization
         import plotly.graph_objects as go
+        import numpy as np
         
         fig = go.Figure()
         
-        # Prepare data for plotting
-        def add_items_to_plot(items, category, color, symbol):
-            if not items:
-                return
-            for idx, item in enumerate(items, 1):
-                if isinstance(item, dict):
-                    text = item.get('text', '')
-                    impact = item.get('impact', 5)
-                    control = item.get('control', 5)
-                    label = f"{category}{idx}"
+        # Normalize and de-cluster function
+        def normalize_and_decluster(items_dict):
+            """Normalize scores to spread across matrix and add jitter to prevent overlap"""
+            all_items = []
+            for category, items in items_dict.items():
+                if items:
+                    for idx, item in enumerate(items):
+                        if isinstance(item, dict):
+                            all_items.append({
+                                'category': category,
+                                'idx': idx,
+                                'text': item.get('text', ''),
+                                'impact': item.get('impact', 5),
+                                'control': item.get('control', 5)
+                            })
+            
+            if not all_items:
+                return all_items
+            
+            # Extract scores
+            impacts = [item['impact'] for item in all_items]
+            controls = [item['control'] for item in all_items]
+            
+            # Normalize to spread across 1-10 range
+            if len(set(impacts)) > 1:  # Only normalize if there's variance
+                min_impact, max_impact = min(impacts), max(impacts)
+                for item in all_items:
+                    item['impact_norm'] = 1 + 9 * (item['impact'] - min_impact) / (max_impact - min_impact)
+            else:
+                for item in all_items:
+                    item['impact_norm'] = item['impact']
+            
+            if len(set(controls)) > 1:
+                min_control, max_control = min(controls), max(controls)
+                for item in all_items:
+                    item['control_norm'] = 1 + 9 * (item['control'] - min_control) / (max_control - min_control)
+            else:
+                for item in all_items:
+                    item['control_norm'] = item['control']
+            
+            # Add small jitter to prevent exact overlaps
+            np.random.seed(42)  # For consistency
+            for item in all_items:
+                item['impact_final'] = item['impact_norm'] + np.random.uniform(-0.3, 0.3)
+                item['control_final'] = item['control_norm'] + np.random.uniform(-0.3, 0.3)
+                # Clamp to valid range
+                item['impact_final'] = max(0.5, min(10.5, item['impact_final']))
+                item['control_final'] = max(0.5, min(10.5, item['control_final']))
+            
+            return all_items
+        
+        # Prepare data
+        items_dict = {
+            'S': sw.get("S", []),
+            'W': sw.get("W", []),
+            'O': sw.get("O", []),
+            'T': sw.get("T", [])
+        }
+        
+        all_items = normalize_and_decluster(items_dict)
+        
+        # Define colors and symbols
+        category_styles = {
+            'S': {'color': 'green', 'symbol': 'circle', 'name': 'Strengths'},
+            'W': {'color': 'orange', 'symbol': 'square', 'name': 'Weaknesses'},
+            'O': {'color': 'blue', 'symbol': 'diamond', 'name': 'Opportunities'},
+            'T': {'color': 'red', 'symbol': 'triangle-up', 'name': 'Threats'}
+        }
+        
+        # Plot items by category
+        for category in ['S', 'W', 'O', 'T']:
+            cat_items = [item for item in all_items if item['category'] == category]
+            if cat_items:
+                style = category_styles[category]
+                for item in cat_items:
+                    label = f"{category}{item['idx']+1}"
                     fig.add_trace(go.Scatter(
-                        x=[impact],
-                        y=[control],
+                        x=[item['impact_final']],
+                        y=[item['control_final']],
                         mode='markers+text',
-                        marker=dict(size=15, color=color, symbol=symbol),
+                        marker=dict(size=15, color=style['color'], symbol=style['symbol'], 
+                                  line=dict(width=2, color='white')),
                         text=[label],
                         textposition="top center",
-                        name=f"{category}{idx}: {text[:40]}...",
-                        hovertemplate=f"<b>{label}</b><br>{text}<br>Impact: {impact}<br>Control: {control}<extra></extra>"
+                        textfont=dict(size=10, color='black'),
+                        name=f"{label}: {item['text'][:40]}...",
+                        hovertemplate=f"<b>{label}</b><br>{item['text']}<br>" +
+                                    f"Impact: {item['impact']}/10<br>Control: {item['control']}/10<extra></extra>",
+                        showlegend=True,
+                        legendgroup=category,
+                        legendgrouptitle_text=style['name']
                     ))
         
-        # Add all SWOT items
-        add_items_to_plot(sw.get("S"), "S", "green", "circle")
-        add_items_to_plot(sw.get("W"), "W", "orange", "square")
-        add_items_to_plot(sw.get("O"), "O", "blue", "diamond")
-        add_items_to_plot(sw.get("T"), "T", "red", "triangle-up")
+        # Add priority zones with improved styling
+        fig.add_shape(type="rect", x0=5.5, y0=5.5, x1=11, y1=11,
+                     fillcolor="rgba(144, 238, 144, 0.15)", opacity=1, line=dict(width=2, color="green", dash="dash"))
+        fig.add_annotation(x=8.25, y=10, text="HIGH PRIORITY<br>(High Impact + High Control)", 
+                          showarrow=False, font=dict(size=11, color="darkgreen", family="Arial Black"))
         
-        # Add priority zones
-        fig.add_shape(type="rect", x0=5, y0=5, x1=10, y1=10,
-                     fillcolor="lightgreen", opacity=0.2, line_width=0)
-        fig.add_annotation(x=7.5, y=9.5, text="HIGH PRIORITY", showarrow=False, 
-                          font=dict(size=12, color="darkgreen"))
+        fig.add_shape(type="rect", x0=5.5, y0=0, x1=11, y1=5.5,
+                     fillcolor="rgba(255, 255, 153, 0.15)", opacity=1, line=dict(width=2, color="orange", dash="dash"))
+        fig.add_annotation(x=8.25, y=2.75, text="MEDIUM PRIORITY<br>(High Impact + Low Control)",
+                          showarrow=False, font=dict(size=11, color="darkorange", family="Arial Black"))
         
-        fig.add_shape(type="rect", x0=5, y0=0, x1=10, y1=5,
-                     fillcolor="lightyellow", opacity=0.2, line_width=0)
-        fig.add_annotation(x=7.5, y=4.5, text="MEDIUM PRIORITY", showarrow=False,
-                          font=dict(size=12, color="darkorange"))
+        fig.add_shape(type="rect", x0=0, y0=5.5, x1=5.5, y1=11,
+                     fillcolor="rgba(255, 182, 193, 0.15)", opacity=1, line=dict(width=2, color="red", dash="dash"))
+        fig.add_annotation(x=2.75, y=10, text="LOW PRIORITY<br>(Low Impact + High Control)",
+                          showarrow=False, font=dict(size=11, color="darkred", family="Arial Black"))
         
-        fig.add_shape(type="rect", x0=0, y0=5, x1=5, y1=10,
-                     fillcolor="lightcoral", opacity=0.2, line_width=0)
-        fig.add_annotation(x=2.5, y=9.5, text="LOW PRIORITY", showarrow=False,
-                          font=dict(size=12, color="darkred"))
+        fig.add_shape(type="rect", x0=0, y0=0, x1=5.5, y1=5.5,
+                     fillcolor="rgba(255, 182, 193, 0.15)", opacity=1, line=dict(width=2, color="red", dash="dash"))
+        fig.add_annotation(x=2.75, y=2.75, text="LOW PRIORITY<br>(Low Impact + Low Control)",
+                          showarrow=False, font=dict(size=11, color="darkred", family="Arial Black"))
         
-        fig.add_shape(type="rect", x0=0, y0=0, x1=5, y1=5,
-                     fillcolor="lightcoral", opacity=0.2, line_width=0)
-        fig.add_annotation(x=2.5, y=4.5, text="LOW PRIORITY", showarrow=False,
-                          font=dict(size=12, color="darkred"))
+        # Add centered X and Y axes
+        fig.add_shape(type="line", x0=0, y0=5.5, x1=11, y1=5.5,
+                     line=dict(color="black", width=2))
+        fig.add_shape(type="line", x0=5.5, y0=0, x1=5.5, y1=11,
+                     line=dict(color="black", width=2))
         
         # Update layout
         fig.update_layout(
-            title="Impact vs Control Matrix",
-            xaxis_title="Impact →",
-            yaxis_title="Control →",
-            xaxis=dict(range=[0, 10], dtick=1, gridcolor='lightgray'),
-            yaxis=dict(range=[0, 10], dtick=1, gridcolor='lightgray'),
-            height=600,
+            title="Impact on Success vs Ability to Influence",
+            xaxis_title="Impact on Success →",
+            yaxis_title="Ability to Influence →",
+            xaxis=dict(
+                range=[0, 11], 
+                dtick=1, 
+                showgrid=False,  # Suppress gridlines
+                zeroline=False,  # Remove default zero line
+                showticklabels=True
+            ),
+            yaxis=dict(
+                range=[0, 11], 
+                dtick=1, 
+                showgrid=False,  # Suppress gridlines
+                zeroline=False,  # Remove default zero line
+                showticklabels=True
+            ),
+            height=650,
             showlegend=True,
-            hovermode='closest'
+            hovermode='closest',
+            plot_bgcolor='white',
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02
+            )
         )
         
         st.plotly_chart(fig, use_container_width=True)
