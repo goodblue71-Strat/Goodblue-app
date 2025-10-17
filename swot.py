@@ -137,32 +137,90 @@ def run():
         if st.button("Generate SWOT", type="primary", use_container_width=True, disabled=not generator_available):
             on_generate()
 
-    # ---------- Step 1: Edit SWOT ----------
+    # ---------- Step 1: Display SWOT Analysis ----------
     elif st.session_state.step == 1:
-        st.subheader("SWOT Results")
+        st.subheader("SWOT Analysis Results")
+        
+        # AI-Generated Introduction
         sw = state["results"]["SWOT"]
-        cS, cW, cO, cT = st.columns(4)
-        with cS: 
-            new_S = st.text_area("Strengths", _list_to_text(sw.get("S")), height=180)
-        with cW: 
-            new_W = st.text_area("Weaknesses", _list_to_text(sw.get("W")), height=180)
-        with cO: 
-            new_O = st.text_area("Opportunities", _list_to_text(sw.get("O")), height=180)
-        with cT: 
-            new_T = st.text_area("Threats", _list_to_text(sw.get("T")), height=180)
-
+        if sw.get("introduction"):
+            st.markdown(f"*{sw['introduction']}*")
+        
+        st.divider()
+        
+        # Company info header
+        st.markdown(f"**Company:** {state['company']}")
+        st.markdown(f"**Product:** {state['product']}")
+        if state.get('industry'):
+            st.markdown(f"**Industry:** {state['industry']}")
+        if state['scope']:
+            st.markdown(f"**Product Feature:** {state['scope']}")
+        if state['geo']:
+            st.markdown(f"**Geography:** {state['geo']}")
+        
+        st.divider()
+        
+        # Strengths and Weaknesses row
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("← Back", use_container_width=True):
-                st.session_state.step = 0
+            st.markdown("### 💪 Strengths")
+            if sw.get("S"):
+                for idx, item in enumerate(sw["S"], 1):
+                    st.markdown(f"**S{idx}.** {item}")
+            else:
+                st.info("No strengths identified.")
+        
         with col2:
-            if st.button("Next →", type="primary", use_container_width=True):
-                # Save edited SWOT
-                sw["S"] = _text_to_list(new_S)
-                sw["W"] = _text_to_list(new_W)
-                sw["O"] = _text_to_list(new_O)
-                sw["T"] = _text_to_list(new_T)
+            st.markdown("### ⚠️ Weaknesses")
+            if sw.get("W"):
+                for idx, item in enumerate(sw["W"], 1):
+                    st.markdown(f"**W{idx}.** {item}")
+            else:
+                st.info("No weaknesses identified.")
+        
+        st.divider()
+        
+        # Opportunities and Threats row
+        col3, col4 = st.columns(2)
+        with col3:
+            st.markdown("### 🎯 Opportunities")
+            if sw.get("O"):
+                for idx, item in enumerate(sw["O"], 1):
+                    st.markdown(f"**O{idx}.** {item}")
+            else:
+                st.info("No opportunities identified.")
+        
+        with col4:
+            st.markdown("### 🚨 Threats")
+            if sw.get("T"):
+                for idx, item in enumerate(sw["T"], 1):
+                    st.markdown(f"**T{idx}.** {item}")
+            else:
+                st.info("No threats identified.")
+        
+        st.divider()
+        
+        # AI-Generated Key Takeaway
+        st.markdown("#### 💡 Key Takeaway")
+        if sw.get("key_takeaway"):
+            st.info(sw["key_takeaway"])
+        
+        st.divider()
+        
+        # Action buttons
+        col_back, col_edit, col_export = st.columns(3)
+        with col_back:
+            if st.button("← Back to Inputs", use_container_width=True):
+                st.session_state.step = 0
+                st.rerun()
+        with col_edit:
+            if st.button("✏️ Edit Results", use_container_width=True):
                 st.session_state.step = 2
+                st.rerun()
+        with col_export:
+            if st.button("💾 Export", type="primary", use_container_width=True):
+                st.session_state.step = 3
+                st.rerun()
 
     # ---------- Step 2: Edit SWOT ----------
     elif st.session_state.step == 2:
@@ -203,20 +261,20 @@ def run():
         cS, cW, cO, cT = st.columns(4)
         with cS:
             st.markdown("**Strengths**")
-            for item in sw.get("S", []):
-                st.markdown(f"- {item}")
+            for idx, item in enumerate(sw.get("S", []), 1):
+                st.markdown(f"**S{idx}.** {item}")
         with cW:
             st.markdown("**Weaknesses**")
-            for item in sw.get("W", []):
-                st.markdown(f"- {item}")
+            for idx, item in enumerate(sw.get("W", []), 1):
+                st.markdown(f"**W{idx}.** {item}")
         with cO:
             st.markdown("**Opportunities**")
-            for item in sw.get("O", []):
-                st.markdown(f"- {item}")
+            for idx, item in enumerate(sw.get("O", []), 1):
+                st.markdown(f"**O{idx}.** {item}")
         with cT:
             st.markdown("**Threats**")
-            for item in sw.get("T", []):
-                st.markdown(f"- {item}")
+            for idx, item in enumerate(sw.get("T", []), 1):
+                st.markdown(f"**T{idx}.** {item}")
 
         # Export options
         export_data = {
