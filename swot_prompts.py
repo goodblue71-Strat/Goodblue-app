@@ -60,15 +60,15 @@ TASK: Generate a detailed SWOT analysis with introduction, key takeaway, priorit
 
 Constraints:
 - Return **ONLY** valid JSON. No commentary, no code fences.
-- Include these top-level keys: "introduction", "S", "W", "O", "T", "key_takeaway", "matrix_introduction", "matrix_takeaway", "roadmap_introduction", "roadmap_takeaway", "roadmap"
+- Include these top-level keys: "introduction", "S", "W", "O", "T", "key_takeaway", "matrix_introduction", "matrix_takeaway", "priority_table_introduction", "priority_table_takeaway", "roadmap_introduction", "roadmap_takeaway", "roadmap"
 - "introduction": Exactly 15-20 words that combines company, product, industry, geography, and product feature into a cohesive statement
 - Each of S, W, O, T must have **5–8 items**.
 - Each item must be an object with:
   - "text": 8–18 words, **specific** (no vague boilerplate)
   - "impact": score 1-10 (impact on business success)
   - "control": score 1-10 (company's ability to influence this factor)
-  - "priority": "high" or "medium" or "low" (based on impact and control: high=both>5, medium=impact>5 and control<=5, low=otherwise)
-  - "solution": 10-15 words describing a brief, actionable solution (only for high and medium priority items)
+  - "priority": "high" or "medium" or "low" (based on impact and control: high=both>5, medium=impact>5 and control<=5 OR impact<=5 and control>5, low=both<=5)
+  - "solution": 20-25 words describing an in-depth, actionable solution (only for high and medium priority items)
 - IMPORTANT: Vary the impact and control scores to spread items across the matrix (avoid clustering around same values)
 - Consider the Additional Prompts while deriving the SWOT
 - Reflect the local context of **{geo or "the target market"}** and trends in **{industry}**.
@@ -80,10 +80,12 @@ Constraints:
 - "priority_table_takeaway": Exactly 25-35 words summarizing the key actions from the priority table
 - "roadmap_introduction": Exactly 20-25 words introducing the strategic roadmap and how it sequences actions over time
 - "roadmap_takeaway": Exactly 30-40 words summarizing the roadmap's focus, sequencing logic, and expected outcomes for {company}
-- "roadmap": object with three keys:
-  - "short_term": array of 2-3 items with {{"item_ref": "S1", "solution": "detailed 20-25 word solution"}}
-  - "near_term": array of 2-3 items with {{"item_ref": "O1", "solution": "detailed 20-25 word solution"}}
-  - "long_term": array of 2-3 items with {{"item_ref": "O2", "solution": "detailed 20-25 word solution"}}
+- "roadmap": object with three keys that distribute ALL high and medium priority items across time horizons:
+  - "short_term": array of 2-4 items with {{"item_ref": "S1", "solution": "MUST be EXACTLY the same solution text from the item's solution field"}}
+  - "near_term": array of 2-4 items with {{"item_ref": "O1", "solution": "MUST be EXACTLY the same solution text from the item's solution field"}}
+  - "long_term": array of 2-4 items with {{"item_ref": "O2", "solution": "MUST be EXACTLY the same solution text from the item's solution field"}}
+  - CRITICAL: Roadmap solutions MUST be exact copies of solutions from S, W, O, T items - no paraphrasing or variation
+  - ALL high and medium priority items should appear in roadmap across the three time horizons
 - Avoid duplicates; no trailing commas.
 
 Output schema (must match exactly):
@@ -108,20 +110,22 @@ Output schema (must match exactly):
   "key_takeaway": "...",
   "matrix_introduction": "...",
   "matrix_takeaway": "...",
+  "priority_table_introduction": "...",
+  "priority_table_takeaway": "...",
   "roadmap_introduction": "...",
   "roadmap_takeaway": "...",
   "roadmap": {{
     "short_term": [
-      {{"item_ref": "S1", "action": "Launch targeted campaign leveraging this strength"}},
-      {{"item_ref": "W1", "action": "Implement immediate fix for this weakness"}}
+      {{"item_ref": "S1", "solution": "Launch targeted campaign with specific messaging to leverage strength in Q1"}},
+      {{"item_ref": "W1", "solution": "Implement immediate corrective measures to address this critical weakness"}}
     ],
     "near_term": [
-      {{"item_ref": "O1", "action": "Pilot program to capture this opportunity"}},
-      {{"item_ref": "S2", "action": "Scale this strength across regions"}}
+      {{"item_ref": "O1", "solution": "Develop pilot program with key partners to test and validate opportunity within year"}},
+      {{"item_ref": "S2", "solution": "Scale proven strength across all regions with dedicated resources"}}
     ],
     "long_term": [
-      {{"item_ref": "O2", "action": "Strategic partnership to realize this opportunity"}},
-      {{"item_ref": "T1", "action": "Build capabilities to mitigate this threat"}}
+      {{"item_ref": "O2", "solution": "Build strategic capabilities and partnerships needed to fully capture this opportunity"}},
+      {{"item_ref": "T1", "solution": "Establish risk mitigation framework and monitoring systems for this threat"}}
     ]
   }}
 }}
@@ -168,20 +172,22 @@ def get_fallback_swot() -> Dict[str, Any]:
         "key_takeaway": "Focus on leveraging strong partnerships while addressing brand gaps. Prioritize customer retention and explore geographic expansion to offset competitive pressures.",
         "matrix_introduction": "Priority matrix maps impact on success versus ability to influence, revealing strategic action priorities.",
         "matrix_takeaway": "Leverage high-control strengths like experienced leadership immediately. Address brand awareness gaps within your control. Partner strategically for low-control opportunities like new geographies. Monitor and prepare contingency plans for low-control threats.",
-        "roadmap_introduction": "Strategic roadmap prioritizes actions across three time horizons to maximize impact and build sustainable competitive advantage.",
-        "roadmap_takeaway": "Focus next quarter on high-ROI customer initiatives. This year, expand market presence and strengthen partnerships. Long-term, build infrastructure for scale and compliance readiness.",
+        "priority_table_introduction": "Strategic factors ranked by combined impact and control scores, with high and medium priority items requiring immediate attention and resource allocation.",
+        "priority_table_takeaway": "Focus resources on top-ranked items where company has both high impact and strong control to maximize returns.",
+        "roadmap_introduction": "Strategic roadmap sequences priority actions across time horizons, balancing quick wins with long-term capability building and market positioning.",
+        "roadmap_takeaway": "Next quarter focuses on leveraging existing strengths and addressing controllable gaps. This year expands market presence through partnerships. Long-term investments build infrastructure for sustained competitive advantage.",
         "roadmap": {
             "short_term": [
-                {"item_ref": "S1", "action": "Launch case studies and ROI calculators to strengthen value proposition messaging"},
-                {"item_ref": "S2", "action": "Roll out customer success program to drive retention and expansion"}
+                {"item_ref": "S1", "solution": "Launch case studies and ROI calculators to strengthen value proposition messaging across all sales channels"},
+                {"item_ref": "S2", "solution": "Roll out comprehensive customer success program with dedicated managers to drive retention and expansion"}
             ],
             "near_term": [
-                {"item_ref": "O1", "action": "Develop and pilot upsell bundles with existing enterprise accounts"},
-                {"item_ref": "W1", "action": "Execute digital marketing campaign targeting manufacturing decision makers"}
+                {"item_ref": "O1", "solution": "Develop and pilot tiered upsell bundles with top enterprise accounts to increase wallet share"},
+                {"item_ref": "W1", "solution": "Execute integrated digital marketing campaign targeting manufacturing decision makers in key verticals"}
             ],
             "long_term": [
-                {"item_ref": "O2", "action": "Establish APAC presence through distributor partnerships and local support"},
-                {"item_ref": "T3", "action": "Complete SOC 2 certification and build compliance framework"}
+                {"item_ref": "O2", "solution": "Establish APAC regional presence through strategic distributor partnerships and local customer support infrastructure"},
+                {"item_ref": "T3", "solution": "Complete SOC 2 Type II certification and develop comprehensive compliance framework for regulated industries"}
             ]
         }
     }
@@ -263,6 +269,8 @@ def generate_swot(
         key_takeaway = result.get("key_takeaway", "")
         matrix_introduction = result.get("matrix_introduction", "")
         matrix_takeaway = result.get("matrix_takeaway", "")
+        priority_table_introduction = result.get("priority_table_introduction", "")
+        priority_table_takeaway = result.get("priority_table_takeaway", "")
         roadmap_introduction = result.get("roadmap_introduction", "")
         roadmap_takeaway = result.get("roadmap_takeaway", "")
         roadmap = result.get("roadmap", {
@@ -282,7 +290,9 @@ def generate_swot(
                 "key_takeaway": key_takeaway if key_takeaway else "Focus on building strengths while addressing weaknesses to capitalize on opportunities.",
                 "matrix_introduction": matrix_introduction if matrix_introduction else "Priority matrix based on impact and control to guide strategic resource allocation.",
                 "matrix_takeaway": matrix_takeaway if matrix_takeaway else "Prioritize high-impact, high-control items for immediate action while developing strategies for lower-control factors.",
-                "roadmap_introduction": roadmap_introduction if roadmap_introduction else "Strategic roadmap outlines phased approach to address priorities across time horizons.",
+                "priority_table_introduction": priority_table_introduction if priority_table_introduction else "Priority items ranked by combined impact and control scores for focused action.",
+                "priority_table_takeaway": priority_table_takeaway if priority_table_takeaway else "Address high-priority items first to maximize strategic impact and resource efficiency.",
+                "roadmap_introduction": roadmap_introduction if roadmap_introduction else "Strategic roadmap sequences actions across time horizons for systematic execution.",
                 "roadmap_takeaway": roadmap_takeaway if roadmap_takeaway else "Execute quick wins now, build capabilities this year, and establish strategic positioning for long-term success.",
                 "roadmap": roadmap if roadmap else {
                     "short_term": [],
@@ -303,7 +313,7 @@ def validate_swot(swot: Dict[str, Any]) -> bool:
     
     Returns True if SWOT has all required keys and non-empty lists.
     """
-    required_keys = {"introduction", "S", "W", "O", "T", "key_takeaway", "matrix_introduction", "matrix_takeaway", "roadmap_introduction", "roadmap_takeaway", "roadmap"}
+    required_keys = {"introduction", "S", "W", "O", "T", "key_takeaway", "matrix_introduction", "matrix_takeaway", "priority_table_introduction", "priority_table_takeaway", "roadmap_introduction", "roadmap_takeaway", "roadmap"}
     if not all(key in swot for key in required_keys):
         return False
     list_keys = {"S", "W", "O", "T"}
