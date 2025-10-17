@@ -480,11 +480,9 @@ def run():
             st.markdown("")
             short_term = roadmap.get("short_term", [])
             if short_term:
-                for item in short_term:
-                    ref = item.get("item_ref", "")
+                for idx, item in enumerate(short_term, 1):
                     solution = item.get("solution", "")
-                    st.markdown(f"**{ref}**")
-                    st.caption(solution)
+                    st.markdown(f"{idx}. {solution}")
                     st.markdown("")
             else:
                 st.info("No short-term actions defined")
@@ -495,11 +493,9 @@ def run():
             st.markdown("")
             near_term = roadmap.get("near_term", [])
             if near_term:
-                for item in near_term:
-                    ref = item.get("item_ref", "")
+                for idx, item in enumerate(near_term, 1):
                     solution = item.get("solution", "")
-                    st.markdown(f"**{ref}**")
-                    st.caption(solution)
+                    st.markdown(f"{idx}. {solution}")
                     st.markdown("")
             else:
                 st.info("No near-term actions defined")
@@ -510,11 +506,9 @@ def run():
             st.markdown("")
             long_term = roadmap.get("long_term", [])
             if long_term:
-                for item in long_term:
-                    ref = item.get("item_ref", "")
+                for idx, item in enumerate(long_term, 1):
                     solution = item.get("solution", "")
-                    st.markdown(f"**{ref}**")
-                    st.caption(solution)
+                    st.markdown(f"{idx}. {solution}")
                     st.markdown("")
             else:
                 st.info("No long-term actions defined")
