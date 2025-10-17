@@ -461,7 +461,7 @@ def run():
         
         st.divider()
         
-        # Strategic Roadmap
+        # Strategic Roadmap - Built from Priority Table
         st.markdown("### 🗓️ Strategic Roadmap")
         
         # Roadmap Introduction
@@ -469,49 +469,60 @@ def run():
             st.markdown(f"*{sw['roadmap_introduction']}*")
             st.markdown("")
         
-        roadmap = sw.get("roadmap", {})
-        
-        # Create three columns for timeline
-        col_short, col_near, col_long = st.columns(3)
-        
-        with col_short:
-            st.markdown("#### 📅 Short Term")
-            st.markdown("*Next Quarter*")
-            st.markdown("")
-            short_term = roadmap.get("short_term", [])
-            if short_term:
-                for idx, item in enumerate(short_term, 1):
-                    solution = item.get("solution", "")
-                    st.markdown(f"{idx}. {solution}")
-                    st.markdown("")
-            else:
-                st.info("No short-term actions defined")
-        
-        with col_near:
-            st.markdown("#### 📅 Near Term")
-            st.markdown("*This Year*")
-            st.markdown("")
-            near_term = roadmap.get("near_term", [])
-            if near_term:
-                for idx, item in enumerate(near_term, 1):
-                    solution = item.get("solution", "")
-                    st.markdown(f"{idx}. {solution}")
-                    st.markdown("")
-            else:
-                st.info("No near-term actions defined")
-        
-        with col_long:
-            st.markdown("#### 📅 Long Term")
-            st.markdown("*Greater than 1 Year*")
-            st.markdown("")
-            long_term = roadmap.get("long_term", [])
-            if long_term:
-                for idx, item in enumerate(long_term, 1):
-                    solution = item.get("solution", "")
-                    st.markdown(f"{idx}. {solution}")
-                    st.markdown("")
-            else:
-                st.info("No long-term actions defined")
+        # Build roadmap from priority_items (already sorted by score)
+        if priority_items:
+            # Distribute items across time horizons based on control score
+            short_term_items = []
+            near_term_items = []
+            long_term_items = []
+            
+            for item in priority_items:
+                control = item['control']
+                # High control (>7) → short term, Medium control (5-7) → near term, Lower control → long term
+                if control > 7:
+                    short_term_items.append(item)
+                elif control >= 5:
+                    near_term_items.append(item)
+                else:
+                    long_term_items.append(item)
+            
+            # Create three columns for timeline
+            col_short, col_near, col_long = st.columns(3)
+            
+            with col_short:
+                st.markdown("#### 📅 Short Term")
+                st.markdown("*Next Quarter*")
+                st.markdown("")
+                if short_term_items:
+                    for idx, item in enumerate(short_term_items, 1):
+                        st.markdown(f"{idx}. {item['solution']}")
+                        st.markdown("")
+                else:
+                    st.info("No short-term actions")
+            
+            with col_near:
+                st.markdown("#### 📅 Near Term")
+                st.markdown("*This Year*")
+                st.markdown("")
+                if near_term_items:
+                    for idx, item in enumerate(near_term_items, 1):
+                        st.markdown(f"{idx}. {item['solution']}")
+                        st.markdown("")
+                else:
+                    st.info("No near-term actions")
+            
+            with col_long:
+                st.markdown("#### 📅 Long Term")
+                st.markdown("*Greater than 1 Year*")
+                st.markdown("")
+                if long_term_items:
+                    for idx, item in enumerate(long_term_items, 1):
+                        st.markdown(f"{idx}. {item['solution']}")
+                        st.markdown("")
+                else:
+                    st.info("No long-term actions")
+        else:
+            st.info("No priority items to display in roadmap")
         
         # Roadmap Takeaway
         if sw.get("roadmap_takeaway"):
