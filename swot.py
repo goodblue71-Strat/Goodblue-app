@@ -62,10 +62,19 @@ def _get_generator():
 
 # ---------- Helpers ----------
 def _list_to_text(items): 
-    return "\n".join(items or [])
+    if not items:
+        return ""
+    result = []
+    for item in items:
+        if isinstance(item, dict):
+            result.append(item.get('text', ''))
+        else:
+            result.append(str(item))
+    return "\n".join(result)
 
-def _text_to_list(txt): 
-    return [x.strip(" \t-•") for x in (txt or "").splitlines() if x.strip()]
+def _text_to_list(txt):
+    lines = [x.strip(" \t-•") for x in (txt or "").splitlines() if x.strip()]
+    return [{"text": line, "impact": 5, "control": 5} for line in lines]
 
 # ---------- Page Entrypoint ----------
 def run():
@@ -130,7 +139,7 @@ def run():
         state["industry"] = st.text_input("Industry", state.get("industry", ""), placeholder="e.g., Manufacturing")
         state["scope"] = st.text_input("Product Feature (optional)", state["scope"], placeholder="e.g., Identifying bearing failure")
         state["geo"] = st.selectbox("Geography (optional)", ["", "US", "EU", "APAC", "Africa", "Middle East"])
-        state["notes"] = st.text_area("Notes (optional)", value=state["notes"], height=100)
+        state["notes"] = st.text_area("Additional Prompts (optional)", value=state["notes"], height=100, placeholder="Consider these prompts while deriving SWOT")
 
         # Disable button if generator not available
         generator_available = _get_generator() is not None
@@ -148,25 +157,16 @@ def run():
         
         st.divider()
         
-        # Company info header
-        st.markdown(f"**Company:** {state['company']}")
-        st.markdown(f"**Product:** {state['product']}")
-        if state.get('industry'):
-            st.markdown(f"**Industry:** {state['industry']}")
-        if state['scope']:
-            st.markdown(f"**Product Feature:** {state['scope']}")
-        if state['geo']:
-            st.markdown(f"**Geography:** {state['geo']}")
-        
-        st.divider()
-        
         # Strengths and Weaknesses row
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("### 💪 Strengths")
             if sw.get("S"):
                 for idx, item in enumerate(sw["S"], 1):
-                    st.markdown(f"**S{idx}.** {item}")
+                    if isinstance(item, dict):
+                        st.markdown(f"**S{idx}.** {item['text']}")
+                    else:
+                        st.markdown(f"**S{idx}.** {item}")
             else:
                 st.info("No strengths identified.")
         
@@ -174,7 +174,10 @@ def run():
             st.markdown("### ⚠️ Weaknesses")
             if sw.get("W"):
                 for idx, item in enumerate(sw["W"], 1):
-                    st.markdown(f"**W{idx}.** {item}")
+                    if isinstance(item, dict):
+                        st.markdown(f"**W{idx}.** {item['text']}")
+                    else:
+                        st.markdown(f"**W{idx}.** {item}")
             else:
                 st.info("No weaknesses identified.")
         
@@ -186,7 +189,10 @@ def run():
             st.markdown("### 🎯 Opportunities")
             if sw.get("O"):
                 for idx, item in enumerate(sw["O"], 1):
-                    st.markdown(f"**O{idx}.** {item}")
+                    if isinstance(item, dict):
+                        st.markdown(f"**O{idx}.** {item['text']}")
+                    else:
+                        st.markdown(f"**O{idx}.** {item}")
             else:
                 st.info("No opportunities identified.")
         
@@ -194,7 +200,10 @@ def run():
             st.markdown("### 🚨 Threats")
             if sw.get("T"):
                 for idx, item in enumerate(sw["T"], 1):
-                    st.markdown(f"**T{idx}.** {item}")
+                    if isinstance(item, dict):
+                        st.markdown(f"**T{idx}.** {item['text']}")
+                    else:
+                        st.markdown(f"**T{idx}.** {item}")
             else:
                 st.info("No threats identified.")
         
@@ -204,6 +213,84 @@ def run():
         st.markdown("#### 💡 Key Takeaway")
         if sw.get("key_takeaway"):
             st.info(sw["key_takeaway"])
+        
+        st.divider()
+        
+        # Priority Matrix
+        st.markdown("### 📊 Priority Matrix")
+        if sw.get("matrix_introduction"):
+            st.markdown(f"*{sw['matrix_introduction']}*")
+        
+        # Create priority matrix visualization
+        import plotly.graph_objects as go
+        
+        fig = go.Figure()
+        
+        # Prepare data for plotting
+        def add_items_to_plot(items, category, color, symbol):
+            if not items:
+                return
+            for idx, item in enumerate(items, 1):
+                if isinstance(item, dict):
+                    text = item.get('text', '')
+                    impact = item.get('impact', 5)
+                    control = item.get('control', 5)
+                    label = f"{category}{idx}"
+                    fig.add_trace(go.Scatter(
+                        x=[impact],
+                        y=[control],
+                        mode='markers+text',
+                        marker=dict(size=15, color=color, symbol=symbol),
+                        text=[label],
+                        textposition="top center",
+                        name=f"{category}{idx}: {text[:40]}...",
+                        hovertemplate=f"<b>{label}</b><br>{text}<br>Impact: {impact}<br>Control: {control}<extra></extra>"
+                    ))
+        
+        # Add all SWOT items
+        add_items_to_plot(sw.get("S"), "S", "green", "circle")
+        add_items_to_plot(sw.get("W"), "W", "orange", "square")
+        add_items_to_plot(sw.get("O"), "O", "blue", "diamond")
+        add_items_to_plot(sw.get("T"), "T", "red", "triangle-up")
+        
+        # Add priority zones
+        fig.add_shape(type="rect", x0=5, y0=5, x1=10, y1=10,
+                     fillcolor="lightgreen", opacity=0.2, line_width=0)
+        fig.add_annotation(x=7.5, y=9.5, text="HIGH PRIORITY", showarrow=False, 
+                          font=dict(size=12, color="darkgreen"))
+        
+        fig.add_shape(type="rect", x0=5, y0=0, x1=10, y1=5,
+                     fillcolor="lightyellow", opacity=0.2, line_width=0)
+        fig.add_annotation(x=7.5, y=4.5, text="MEDIUM PRIORITY", showarrow=False,
+                          font=dict(size=12, color="darkorange"))
+        
+        fig.add_shape(type="rect", x0=0, y0=5, x1=5, y1=10,
+                     fillcolor="lightcoral", opacity=0.2, line_width=0)
+        fig.add_annotation(x=2.5, y=9.5, text="LOW PRIORITY", showarrow=False,
+                          font=dict(size=12, color="darkred"))
+        
+        fig.add_shape(type="rect", x0=0, y0=0, x1=5, y1=5,
+                     fillcolor="lightcoral", opacity=0.2, line_width=0)
+        fig.add_annotation(x=2.5, y=4.5, text="LOW PRIORITY", showarrow=False,
+                          font=dict(size=12, color="darkred"))
+        
+        # Update layout
+        fig.update_layout(
+            title="Impact vs Control Matrix",
+            xaxis_title="Impact →",
+            yaxis_title="Control →",
+            xaxis=dict(range=[0, 10], dtick=1, gridcolor='lightgray'),
+            yaxis=dict(range=[0, 10], dtick=1, gridcolor='lightgray'),
+            height=600,
+            showlegend=True,
+            hovermode='closest'
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Matrix Key Takeaway
+        if sw.get("matrix_takeaway"):
+            st.info(sw["matrix_takeaway"])
         
         st.divider()
         
