@@ -60,7 +60,7 @@ TASK: Generate a detailed SWOT analysis with introduction, key takeaway, priorit
 
 Constraints:
 - Return **ONLY** valid JSON. No commentary, no code fences.
-- Include these top-level keys: "introduction", "S", "W", "O", "T", "key_takeaway", "matrix_introduction", "matrix_takeaway", "roadmap"
+- Include these top-level keys: "introduction", "S", "W", "O", "T", "key_takeaway", "matrix_introduction", "matrix_takeaway", "roadmap_introduction", "roadmap_takeaway", "roadmap"
 - "introduction": Exactly 15-20 words that combines company, product, industry, geography, and product feature into a cohesive statement
 - Each of S, W, O, T must have **5–8 items**.
 - Each item must be an object with:
@@ -76,13 +76,14 @@ Constraints:
 - "key_takeaway": Exactly 25-30 words with actionable strategic insight based on the SWOT findings
 - "matrix_introduction": Exactly 15-20 words introducing the priority matrix using "Impact on Success" vs "Ability to Influence"
 - "matrix_takeaway": Exactly 35-45 words with SPECIFIC, CONTEXTUAL insights about {company}'s {product} strategy. Reference actual high-priority items and suggest concrete actions based on their position in the matrix.
-- "roadmap_introduction": Exactly 15-20 words introducing the strategic roadmap and its time horizons
-- "roadmap_takeaway": Exactly 30-40 words summarizing the roadmap's focus and expected outcomes for {company}
+- "priority_table_introduction": Exactly 20-25 words introducing the priority table and how items are ranked
+- "priority_table_takeaway": Exactly 25-35 words summarizing the key actions from the priority table
+- "roadmap_introduction": Exactly 20-25 words introducing the strategic roadmap and how it sequences actions over time
+- "roadmap_takeaway": Exactly 30-40 words summarizing the roadmap's focus, sequencing logic, and expected outcomes for {company}
 - "roadmap": object with three keys:
-  - "short_term": array of 2-3 high priority items to address in next quarter
-  - "near_term": array of 2-3 high/medium priority items to address this year
-  - "long_term": array of 2-3 medium priority items to address in 2 years
-  Each roadmap item should be: {{"item_ref": "S1" or "W2" etc, "action": "10-15 word action plan"}}
+  - "short_term": array of 2-3 items with {{"item_ref": "S1", "solution": "detailed 20-25 word solution"}}
+  - "near_term": array of 2-3 items with {{"item_ref": "O1", "solution": "detailed 20-25 word solution"}}
+  - "long_term": array of 2-3 items with {{"item_ref": "O2", "solution": "detailed 20-25 word solution"}}
 - Avoid duplicates; no trailing commas.
 
 Output schema (must match exactly):
@@ -107,6 +108,8 @@ Output schema (must match exactly):
   "key_takeaway": "...",
   "matrix_introduction": "...",
   "matrix_takeaway": "...",
+  "roadmap_introduction": "...",
+  "roadmap_takeaway": "...",
   "roadmap": {{
     "short_term": [
       {{"item_ref": "S1", "action": "Launch targeted campaign leveraging this strength"}},
@@ -165,6 +168,8 @@ def get_fallback_swot() -> Dict[str, Any]:
         "key_takeaway": "Focus on leveraging strong partnerships while addressing brand gaps. Prioritize customer retention and explore geographic expansion to offset competitive pressures.",
         "matrix_introduction": "Priority matrix maps impact on success versus ability to influence, revealing strategic action priorities.",
         "matrix_takeaway": "Leverage high-control strengths like experienced leadership immediately. Address brand awareness gaps within your control. Partner strategically for low-control opportunities like new geographies. Monitor and prepare contingency plans for low-control threats.",
+        "roadmap_introduction": "Strategic roadmap prioritizes actions across three time horizons to maximize impact and build sustainable competitive advantage.",
+        "roadmap_takeaway": "Focus next quarter on high-ROI customer initiatives. This year, expand market presence and strengthen partnerships. Long-term, build infrastructure for scale and compliance readiness.",
         "roadmap": {
             "short_term": [
                 {"item_ref": "S1", "action": "Launch case studies and ROI calculators to strengthen value proposition messaging"},
@@ -258,6 +263,8 @@ def generate_swot(
         key_takeaway = result.get("key_takeaway", "")
         matrix_introduction = result.get("matrix_introduction", "")
         matrix_takeaway = result.get("matrix_takeaway", "")
+        roadmap_introduction = result.get("roadmap_introduction", "")
+        roadmap_takeaway = result.get("roadmap_takeaway", "")
         roadmap = result.get("roadmap", {
             "short_term": [],
             "near_term": [],
@@ -275,6 +282,8 @@ def generate_swot(
                 "key_takeaway": key_takeaway if key_takeaway else "Focus on building strengths while addressing weaknesses to capitalize on opportunities.",
                 "matrix_introduction": matrix_introduction if matrix_introduction else "Priority matrix based on impact and control to guide strategic resource allocation.",
                 "matrix_takeaway": matrix_takeaway if matrix_takeaway else "Prioritize high-impact, high-control items for immediate action while developing strategies for lower-control factors.",
+                "roadmap_introduction": roadmap_introduction if roadmap_introduction else "Strategic roadmap outlines phased approach to address priorities across time horizons.",
+                "roadmap_takeaway": roadmap_takeaway if roadmap_takeaway else "Execute quick wins now, build capabilities this year, and establish strategic positioning for long-term success.",
                 "roadmap": roadmap if roadmap else {
                     "short_term": [],
                     "near_term": [],
@@ -294,7 +303,7 @@ def validate_swot(swot: Dict[str, Any]) -> bool:
     
     Returns True if SWOT has all required keys and non-empty lists.
     """
-    required_keys = {"introduction", "S", "W", "O", "T", "key_takeaway", "matrix_introduction", "matrix_takeaway"}
+    required_keys = {"introduction", "S", "W", "O", "T", "key_takeaway", "matrix_introduction", "matrix_takeaway", "roadmap_introduction", "roadmap_takeaway", "roadmap"}
     if not all(key in swot for key in required_keys):
         return False
     list_keys = {"S", "W", "O", "T"}
