@@ -472,21 +472,34 @@ def run():
             import pandas as pd
             df = pd.DataFrame(table_data)
             
+            # Custom CSS to center Priority column
+            st.markdown("""
+                <style>
+                    /* Center align Priority column */
+                    div[data-testid="stDataFrame"] tbody tr td:nth-child(2) {
+                        text-align: center !important;
+                    }
+                    div[data-testid="stDataFrame"] thead tr th:nth-child(2) {
+                        text-align: center !important;
+                    }
+                </style>
+            """, unsafe_allow_html=True)
+            
             st.dataframe(
                 df,
                 column_config={
                     "Strategic Factor": st.column_config.TextColumn(
                         "Strategic Factor",
-                        width="large",
+                        width=450,
                     ),
                     "Priority": st.column_config.NumberColumn(
                         "Priority",
-                        width=100,
+                        width=90,
                         format="%d"
                     ),
                     "Solution": st.column_config.TextColumn(
                         "Solution",
-                        width="large",
+                        width=500,
                     ),
                 },
                 hide_index=True,
