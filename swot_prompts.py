@@ -81,11 +81,12 @@ Constraints:
 - "roadmap_introduction": Exactly 20-25 words introducing the strategic roadmap and how it sequences actions over time
 - "roadmap_takeaway": Exactly 30-40 words summarizing the roadmap's focus, sequencing logic, and expected outcomes for {company}
 - "roadmap": object with three keys that distribute ALL high and medium priority items across time horizons:
-  - "short_term": array of 2-4 items with {{"item_ref": "S1", "solution": "MUST be EXACTLY the same solution text from the item's solution field"}}
-  - "near_term": array of 2-4 items with {{"item_ref": "O1", "solution": "MUST be EXACTLY the same solution text from the item's solution field"}}
-  - "long_term": array of 2-4 items with {{"item_ref": "O2", "solution": "MUST be EXACTLY the same solution text from the item's solution field"}}
-  - CRITICAL: Roadmap solutions MUST be exact copies of solutions from S, W, O, T items - no paraphrasing or variation
-  - ALL high and medium priority items should appear in roadmap across the three time horizons
+  - "short_term": array containing high priority items with highest control scores {{"item_ref": "S1", "solution": "EXACT solution text from item"}}
+  - "near_term": array containing remaining high priority and some medium priority items {{"item_ref": "O1", "solution": "EXACT solution text from item"}}
+  - "long_term": array containing remaining medium priority items {{"item_ref": "O2", "solution": "EXACT solution text from item"}}
+  - CRITICAL: Roadmap solutions MUST be EXACTLY the same as in S, W, O, T items - character-for-character match
+  - CRITICAL: EVERY high and medium priority item MUST appear in exactly one time horizon
+  - Distribute items logically: high control → short term, medium control → near/long term
 - Avoid duplicates; no trailing commas.
 
 Output schema (must match exactly):
@@ -116,16 +117,16 @@ Output schema (must match exactly):
   "roadmap_takeaway": "...",
   "roadmap": {{
     "short_term": [
-      {{"item_ref": "S1", "solution": "Launch targeted campaign with specific messaging to leverage strength in Q1"}},
-      {{"item_ref": "W1", "solution": "Implement immediate corrective measures to address this critical weakness"}}
+      {{"item_ref": "S1", "solution": "Launch case studies showcasing ROI to amplify market position"}},
+      {{"item_ref": "W1", "solution": "Execute targeted digital marketing campaign in key manufacturing verticals"}}
     ],
     "near_term": [
-      {{"item_ref": "O1", "solution": "Develop pilot program with key partners to test and validate opportunity within year"}},
-      {{"item_ref": "S2", "solution": "Scale proven strength across all regions with dedicated resources"}}
+      {{"item_ref": "O1", "solution": "Create tiered product bundles for cross-sell into installed base"}},
+      {{"item_ref": "S2", "solution": "Implement customer success program to maximize retention and expansion"}}
     ],
     "long_term": [
-      {{"item_ref": "O2", "solution": "Build strategic capabilities and partnerships needed to fully capture this opportunity"}},
-      {{"item_ref": "T1", "solution": "Establish risk mitigation framework and monitoring systems for this threat"}}
+      {{"item_ref": "O2", "solution": "Partner with local distributors for APAC market entry pilot"}},
+      {{"item_ref": "T1", "solution": "Differentiate on total cost of ownership and premium support"}}
     ]
   }}
 }}
@@ -178,16 +179,16 @@ def get_fallback_swot() -> Dict[str, Any]:
         "roadmap_takeaway": "Next quarter focuses on leveraging existing strengths and addressing controllable gaps. This year expands market presence through partnerships. Long-term investments build infrastructure for sustained competitive advantage.",
         "roadmap": {
             "short_term": [
-                {"item_ref": "S1", "solution": "Launch case studies and ROI calculators to strengthen value proposition messaging across all sales channels"},
-                {"item_ref": "S2", "solution": "Roll out comprehensive customer success program with dedicated managers to drive retention and expansion"}
+                {"item_ref": "S1", "solution": "Launch case studies showcasing ROI to amplify market position"},
+                {"item_ref": "S2", "solution": "Implement customer success program to maximize retention and expansion"}
             ],
             "near_term": [
-                {"item_ref": "O1", "solution": "Develop and pilot tiered upsell bundles with top enterprise accounts to increase wallet share"},
-                {"item_ref": "W1", "solution": "Execute integrated digital marketing campaign targeting manufacturing decision makers in key verticals"}
+                {"item_ref": "O1", "solution": "Create tiered product bundles for cross-sell into installed base"},
+                {"item_ref": "W1", "solution": "Execute targeted digital marketing campaign in key manufacturing verticals"}
             ],
             "long_term": [
-                {"item_ref": "O2", "solution": "Establish APAC regional presence through strategic distributor partnerships and local customer support infrastructure"},
-                {"item_ref": "T3", "solution": "Complete SOC 2 Type II certification and develop comprehensive compliance framework for regulated industries"}
+                {"item_ref": "O2", "solution": "Partner with local distributors for APAC market entry pilot"},
+                {"item_ref": "T3", "solution": "Obtain SOC 2 certification and publish security whitepaper"}
             ]
         }
     }
