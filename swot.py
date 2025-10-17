@@ -244,15 +244,18 @@ def run():
                             })
             
             if not all_items:
-                return all_items
+                return all_items, 0, 10, 0, 10
             
             # Extract scores
             impacts = [item['impact'] for item in all_items]
             controls = [item['control'] for item in all_items]
             
+            # Get min/max for normalization
+            min_impact, max_impact = min(impacts), max(impacts)
+            min_control, max_control = min(controls), max(controls)
+            
             # Normalize to spread across 1-10 range
             if len(set(impacts)) > 1:  # Only normalize if there's variance
-                min_impact, max_impact = min(impacts), max(impacts)
                 for item in all_items:
                     item['impact_norm'] = 1 + 9 * (item['impact'] - min_impact) / (max_impact - min_impact)
             else:
@@ -260,7 +263,6 @@ def run():
                     item['impact_norm'] = item['impact']
             
             if len(set(controls)) > 1:
-                min_control, max_control = min(controls), max(controls)
                 for item in all_items:
                     item['control_norm'] = 1 + 9 * (item['control'] - min_control) / (max_control - min_control)
             else:
@@ -276,7 +278,7 @@ def run():
                 item['impact_final'] = max(0.5, min(10.5, item['impact_final']))
                 item['control_final'] = max(0.5, min(10.5, item['control_final']))
             
-            return all_items
+            return all_items, min_impact, max_impact, min_control, max_control
         
         # Prepare data
         items_dict = {
@@ -286,7 +288,7 @@ def run():
             'T': sw.get("T", [])
         }
         
-        all_items = normalize_and_decluster(items_dict)
+        all_items, min_impact, max_impact, min_control, max_control = normalize_and_decluster(items_dict)
         
         # Define colors and symbols
         category_styles = {
@@ -347,6 +349,23 @@ def run():
         fig.add_shape(type="line", x0=5.5, y0=0, x1=5.5, y1=11,
                      line=dict(color="black", width=2))
         
+        # Create custom tick labels that map to original scores
+        def create_tick_labels(min_val, max_val):
+            """Create tick labels that show original score values"""
+            tick_positions = list(range(0, 11))
+            tick_labels = []
+            for pos in tick_positions:
+                if min_val != max_val:
+                    # Map normalized position back to original score
+                    original = min_val + (max_val - min_val) * (pos - 1) / 9
+                    tick_labels.append(f"{original:.1f}")
+                else:
+                    tick_labels.append(f"{min_val:.1f}")
+            return tick_positions, tick_labels
+        
+        x_tick_positions, x_tick_labels = create_tick_labels(min_impact, max_impact)
+        y_tick_positions, y_tick_labels = create_tick_labels(min_control, max_control)
+        
         # Update layout
         fig.update_layout(
             title="Impact on Success vs Ability to Influence",
@@ -354,16 +373,20 @@ def run():
             yaxis_title="Ability to Influence →",
             xaxis=dict(
                 range=[0, 11], 
-                dtick=1, 
-                showgrid=False,  # Suppress gridlines
-                zeroline=False,  # Remove default zero line
+                tickmode='array',
+                tickvals=x_tick_positions,
+                ticktext=x_tick_labels,
+                showgrid=False,
+                zeroline=False,
                 showticklabels=True
             ),
             yaxis=dict(
                 range=[0, 11], 
-                dtick=1, 
-                showgrid=False,  # Suppress gridlines
-                zeroline=False,  # Remove default zero line
+                tickmode='array',
+                tickvals=y_tick_positions,
+                ticktext=y_tick_labels,
+                showgrid=False,
+                zeroline=False,
                 showticklabels=True
             ),
             height=650,
