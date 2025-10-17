@@ -65,14 +65,15 @@ Constraints:
 - Each of S, W, O, T must have **5–8 items**.
 - Each item must be an object with:
   - "text": 8–18 words, **specific** (no vague boilerplate)
-  - "impact": score 1-10 (how much this affects business outcomes)
-  - "control": score 1-10 (how much control the company has over this)
+  - "impact": score 1-10 (impact on business success)
+  - "control": score 1-10 (company's ability to influence this factor)
+- IMPORTANT: Vary the impact and control scores to spread items across the matrix (avoid clustering around same values)
 - Consider the Additional Prompts while deriving the SWOT
 - Reflect the local context of **{geo or "the target market"}** and trends in **{industry}**.
 - Cover these capabilities across items: {", ".join(CAPABILITY_AREAS)}.
 - "key_takeaway": Exactly 25-30 words with actionable strategic insight based on the SWOT findings
-- "matrix_introduction": Exactly 15-20 words introducing the priority matrix based on impact and control
-- "matrix_takeaway": Exactly 25-30 words with insights from the priority matrix
+- "matrix_introduction": Exactly 15-20 words introducing the priority matrix using "Impact on Success" vs "Ability to Influence"
+- "matrix_takeaway": Exactly 35-45 words with SPECIFIC, CONTEXTUAL insights about {company}'s {product} strategy. Reference actual high-priority items and suggest concrete actions based on their position in the matrix.
 - Avoid duplicates; no trailing commas.
 
 Output schema (must match exactly):
