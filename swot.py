@@ -477,11 +477,11 @@ def run():
                 column_config={
                     "Strategic Factor": st.column_config.TextColumn(
                         "Strategic Factor",
-                        width="medium",
+                        width="large",
                     ),
                     "Priority": st.column_config.NumberColumn(
                         "Priority",
-                        width="small",
+                        width=100,
                         format="%d"
                     ),
                     "Solution": st.column_config.TextColumn(
