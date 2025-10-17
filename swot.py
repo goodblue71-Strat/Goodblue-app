@@ -421,18 +421,9 @@ def run():
             # Create table data
             table_data = []
             for item in priority_items:
-                # Category emoji
-                category_emoji = {'S': '💪', 'W': '⚠️', 'O': '🎯', 'T': '🚨'}.get(item['category'], '')
-                
-                # Priority badge
-                if item['priority'] == 'high':
-                    priority_display = "🔴 HIGH"
-                else:
-                    priority_display = "🟡 MEDIUM"
-                
                 table_data.append({
-                    'Strategic Factor': f"{category_emoji} **{item['ref']}**: {item['text']}",
-                    'Priority': priority_display,
+                    'Strategic Factor': item['text'],
+                    'Priority': item['score'],
                     'Solution': item['solution']
                 })
             
@@ -447,9 +438,10 @@ def run():
                         "Strategic Factor",
                         width="medium",
                     ),
-                    "Priority": st.column_config.TextColumn(
+                    "Priority": st.column_config.NumberColumn(
                         "Priority",
                         width="small",
+                        format="%d"
                     ),
                     "Solution": st.column_config.TextColumn(
                         "Solution",
