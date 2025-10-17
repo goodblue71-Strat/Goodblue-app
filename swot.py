@@ -387,6 +387,114 @@ def run():
         
         st.divider()
         
+        # Strategic Roadmap
+        st.markdown("### 🗓️ Strategic Roadmap")
+        
+        # Roadmap Introduction
+        if sw.get("roadmap_introduction"):
+            st.markdown(f"*{sw['roadmap_introduction']}*")
+            st.markdown("")
+        
+        roadmap = sw.get("roadmap", {})
+        
+        # Create three columns for timeline
+        col_short, col_near, col_long = st.columns(3)
+        
+        with col_short:
+            st.markdown("#### 📅 Short Term")
+            st.markdown("*Next Quarter*")
+            st.markdown("")
+            short_term = roadmap.get("short_term", [])
+            if short_term:
+                for item in short_term:
+                    ref = item.get("item_ref", "")
+                    action = item.get("action", "")
+                    st.markdown(f"**{ref}:** {action}")
+            else:
+                st.info("No short-term actions defined")
+        
+        with col_near:
+            st.markdown("#### 📅 Near Term")
+            st.markdown("*This Year*")
+            st.markdown("")
+            near_term = roadmap.get("near_term", [])
+            if near_term:
+                for item in near_term:
+                    ref = item.get("item_ref", "")
+                    action = item.get("action", "")
+                    st.markdown(f"**{ref}:** {action}")
+            else:
+                st.info("No near-term actions defined")
+        
+        with col_long:
+            st.markdown("#### 📅 Long Term")
+            st.markdown("*In 2 Years*")
+            st.markdown("")
+            long_term = roadmap.get("long_term", [])
+            if long_term:
+                for item in long_term:
+                    ref = item.get("item_ref", "")
+                    action = item.get("action", "")
+                    st.markdown(f"**{ref}:** {action}")
+            else:
+                st.info("No long-term actions defined")
+        
+        st.divider()
+        
+        # High & Medium Priority Items with Solutions
+        st.markdown("### 🎯 Priority Items & Solutions")
+        
+        # Collect high and medium priority items
+        priority_items = []
+        for category in ['S', 'W', 'O', 'T']:
+            items = sw.get(category, [])
+            for idx, item in enumerate(items, 1):
+                if isinstance(item, dict):
+                    priority = item.get('priority', 'low')
+                    if priority in ['high', 'medium']:
+                        priority_items.append({
+                            'ref': f"{category}{idx}",
+                            'category': category,
+                            'text': item.get('text', ''),
+                            'priority': priority,
+                            'solution': item.get('solution', 'No solution provided'),
+                            'impact': item.get('impact', 0),
+                            'control': item.get('control', 0)
+                        })
+        
+        # Sort by priority (high first) then by impact
+        priority_items.sort(key=lambda x: (0 if x['priority'] == 'high' else 1, -x['impact']))
+        
+        if priority_items:
+            # Display in two columns
+            col1, col2 = st.columns(2)
+            
+            for idx, item in enumerate(priority_items):
+                col = col1 if idx % 2 == 0 else col2
+                
+                with col:
+                    # Determine emoji and color based on category
+                    category_info = {
+                        'S': {'emoji': '💪', 'color': 'green', 'label': 'Strength'},
+                        'W': {'emoji': '⚠️', 'color': 'orange', 'label': 'Weakness'},
+                        'O': {'emoji': '🎯', 'color': 'blue', 'label': 'Opportunity'},
+                        'T': {'emoji': '🚨', 'color': 'red', 'label': 'Threat'}
+                    }
+                    
+                    info = category_info.get(item['category'], {})
+                    priority_badge = "🔴 HIGH" if item['priority'] == 'high' else "🟡 MEDIUM"
+                    
+                    st.markdown(f"**{info.get('emoji', '')} {item['ref']}** - {priority_badge}")
+                    st.caption(f"*{info.get('label', '')}*")
+                    st.markdown(f"**Issue:** {item['text']}")
+                    st.markdown(f"**Solution:** {item['solution']}")
+                    st.caption(f"Impact: {item['impact']}/10 | Control: {item['control']}/10")
+                    st.markdown("---")
+        else:
+            st.info("No high or medium priority items identified")
+        
+        st.divider()
+        
         # Action buttons
         col_back, col_edit, col_export = st.columns(3)
         with col_back:
